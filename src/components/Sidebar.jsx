@@ -3,18 +3,17 @@ import { Settings, MapPin, Wifi, Instagram } from 'lucide-react';
 import { LOGO_URL, CITY_CONFIG } from '../constants';
 
 export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
-    // Estilos inline para compatibilidade com Smart TVs
     const sidebarStyle = {
-        width: '25rem', /* Mais larga para evitar quebra */
-        minWidth: '25rem',
-        maxWidth: '25rem',
+        width: '22rem',
+        minWidth: '22rem',
+        maxWidth: '22rem',
         flexShrink: 0,
         WebkitFlexShrink: 0,
         display: 'flex',
         WebkitDisplay: 'flex',
         flexDirection: 'column',
         WebkitFlexDirection: 'column',
-        background: 'linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%)',
+        background: '#ffffff',
         color: '#14532d',
         zIndex: 20,
         position: 'relative',
@@ -37,7 +36,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
     };
 
     const clockStyle = {
-        fontSize: '5rem', /* Levemente menor para garantir que caiba */
+        fontSize: '5.5rem',
         lineHeight: 1,
         fontWeight: 200,
         color: '#14532d',
@@ -47,33 +46,30 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
     };
 
     const weatherCardStyle = {
-        background: 'linear-gradient(to bottom right, #166534 0%, #14532d 100%)',
-        borderRadius: '1.5rem',
+        background: '#166534',
+        borderRadius: '24px',
         padding: '1.25rem',
         marginBottom: '1rem',
         position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+        overflow: 'hidden'
     };
 
     const instagramCardStyle = {
         background: '#ffffff',
-        borderRadius: '1.5rem',
-        padding: '1.25rem',
-        marginBottom: '1rem',
-        border: '1px solid #f3f4f6',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
+        borderRadius: '20px',
+        padding: '1rem',
+        marginBottom: '0.75rem',
+        border: '1px solid #e5e7eb',
         position: 'relative',
         overflow: 'hidden'
     };
 
     const wifiCardStyle = {
-        background: 'linear-gradient(to right, #f97316 0%, #ea580c 100%)',
-        borderRadius: '1.5rem',
+        background: '#ea580c',
+        borderRadius: '24px',
         padding: '1.25rem',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
         marginBottom: '0.5rem'
     };
 
@@ -90,14 +86,13 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
         paddingTop: '0.5rem',
         paddingBottom: '0.5rem',
         borderRadius: '9999px',
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+        fontSize: '1rem',
+        fontWeight: 500
     };
 
     return (
         <aside style={sidebarStyle}>
-            {/* Botão Admin (invisível até hover) */}
+            {/* Botão Admin */}
             <button
                 onClick={() => setIsAdminOpen(true)}
                 style={{
@@ -119,32 +114,6 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
             >
                 <Settings size={18} />
             </button>
-
-            {/* Elemento decorativo superior */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '160px',
-                height: '160px',
-                background: 'radial-gradient(circle, rgba(22, 101, 52, 0.1) 0%, transparent 70%)',
-                borderRadius: '50%',
-                marginRight: '-80px',
-                marginTop: '-80px'
-            }}></div>
-
-            {/* Elemento decorativo inferior */}
-            <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                width: '128px',
-                height: '128px',
-                background: 'radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 70%)',
-                borderRadius: '50%',
-                marginLeft: '-64px',
-                marginBottom: '-64px'
-            }}></div>
 
             {/* Conteúdo */}
             <div style={contentStyle}>
@@ -173,19 +142,6 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
 
                 {/* Card Clima */}
                 <div style={weatherCardStyle}>
-                    {/* Elemento decorativo */}
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        width: '96px',
-                        height: '96px',
-                        background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
-                        borderRadius: '50%',
-                        marginRight: '-32px',
-                        marginTop: '-32px'
-                    }}></div>
-
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -216,7 +172,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
 
                 {/* Card Instagram */}
                 <div style={instagramCardStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9ca3af', marginBottom: '1rem', position: 'relative', zIndex: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
                         <div style={{
                             padding: '6px',
                             background: 'linear-gradient(to bottom right, #8b5cf6 0%, #ec4899 50%, #fb923c 100%)',
@@ -224,17 +180,17 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
                         }}>
                             <Instagram size={14} style={{ color: 'white' }} />
                         </div>
-                        <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#6b7280' }}>Siga-nos</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280' }}>Siga-nos</span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <img
                             src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://instagram.com/gmadmadville&color=166534"
                             alt="Instagram QR"
-                            style={{ width: '6rem', height: '6rem', borderRadius: '0.75rem' }}
+                            style={{ width: '100px', height: '100px', borderRadius: '8px', flexShrink: 0 }}
                         />
-                        <div>
-                            <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534', marginBottom: '0.25rem' }}>@gmadmadville</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#166534', marginBottom: '4px' }}>@gmadmadville</p>
                             <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Escaneie para seguir</p>
                         </div>
                     </div>
@@ -242,16 +198,6 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
 
                 {/* Card Wi-Fi */}
                 <div style={wifiCardStyle}>
-                    {/* Pattern overlay */}
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        opacity: 0.1,
-                        backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                        backgroundSize: '20px 20px'
-                    }}></div>
-
-                    {/* Ícone decorativo */}
                     <div style={{
                         position: 'absolute',
                         bottom: '-24px',
@@ -270,7 +216,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
                         <div>
                             <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.625rem', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>Rede</p>
                             <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', lineHeight: 1.2 }}>GMAD Madville</p>
-                            <p style={{ fontSize: '1.125rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)' }}>Visitantes</p>
+                            <p style={{ fontSize: '1.125rem', fontWeight: 700, color: 'white' }}>Visitantes</p>
                         </div>
                     </div>
                 </div>

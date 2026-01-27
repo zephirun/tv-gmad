@@ -115,7 +115,7 @@ export default function App() {
     WebkitDisplay: 'flex',
     flex: 1,
     WebkitFlex: 1,
-    height: 'calc(100vh - 60px)',
+    height: 'calc(100vh - 70px)',
   };
 
   const playerContainerStyle = {
