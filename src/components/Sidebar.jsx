@@ -1,0 +1,280 @@
+import React from 'react';
+import { Settings, MapPin, Wifi, Instagram } from 'lucide-react';
+import { LOGO_URL, CITY_CONFIG } from '../constants';
+
+export default function Sidebar({ dateTime, weather, setIsAdminOpen }) {
+    // Estilos inline para compatibilidade com Smart TVs
+    const sidebarStyle = {
+        width: '25rem', /* Mais larga para evitar quebra */
+        minWidth: '25rem',
+        maxWidth: '25rem',
+        flexShrink: 0,
+        WebkitFlexShrink: 0,
+        display: 'flex',
+        WebkitDisplay: 'flex',
+        flexDirection: 'column',
+        WebkitFlexDirection: 'column',
+        background: 'linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%)',
+        color: '#14532d',
+        zIndex: 20,
+        position: 'relative',
+        height: '100%',
+        overflow: 'hidden',
+        fontFamily: "'Outfit', 'Inter', sans-serif"
+    };
+
+    const contentStyle = {
+        display: 'flex',
+        WebkitDisplay: 'flex',
+        flexDirection: 'column',
+        WebkitFlexDirection: 'column',
+        justifyContent: 'space-between',
+        WebkitJustifyContent: 'space-between',
+        height: '100%',
+        padding: '1.5rem',
+        position: 'relative',
+        zIndex: 10
+    };
+
+    const clockStyle = {
+        fontSize: '5rem', /* Levemente menor para garantir que caiba */
+        lineHeight: 1,
+        fontWeight: 200,
+        color: '#14532d',
+        letterSpacing: '-0.025em',
+        marginBottom: '0.5rem',
+        fontFamily: "'Outfit', sans-serif"
+    };
+
+    const weatherCardStyle = {
+        background: 'linear-gradient(to bottom right, #166534 0%, #14532d 100%)',
+        borderRadius: '1.5rem',
+        padding: '1.25rem',
+        marginBottom: '1rem',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+    };
+
+    const instagramCardStyle = {
+        background: '#ffffff',
+        borderRadius: '1.5rem',
+        padding: '1.25rem',
+        marginBottom: '1rem',
+        border: '1px solid #f3f4f6',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
+        position: 'relative',
+        overflow: 'hidden'
+    };
+
+    const wifiCardStyle = {
+        background: 'linear-gradient(to right, #f97316 0%, #ea580c 100%)',
+        borderRadius: '1.5rem',
+        padding: '1.25rem',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+        marginBottom: '0.5rem'
+    };
+
+    const dateBadgeStyle = {
+        display: 'inline-flex',
+        WebkitDisplay: 'inline-flex',
+        alignItems: 'center',
+        WebkitAlignItems: 'center',
+        gap: '0.5rem',
+        backgroundColor: '#166534',
+        color: 'white',
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        paddingTop: '0.5rem',
+        paddingBottom: '0.5rem',
+        borderRadius: '9999px',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+    };
+
+    return (
+        <aside style={sidebarStyle}>
+            {/* Botão Admin (invisível até hover) */}
+            <button
+                onClick={() => setIsAdminOpen(true)}
+                style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    padding: '8px',
+                    color: '#d1d5db',
+                    opacity: 0,
+                    transition: 'all 0.3s ease',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    zIndex: 50
+                }}
+                onMouseEnter={(e) => { e.target.style.opacity = 1; e.target.style.color = '#166534'; e.target.style.backgroundColor = '#f0fdf4'; }}
+                onMouseLeave={(e) => { e.target.style.opacity = 0; e.target.style.backgroundColor = 'transparent'; }}
+            >
+                <Settings size={18} />
+            </button>
+
+            {/* Elemento decorativo superior */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '160px',
+                height: '160px',
+                background: 'radial-gradient(circle, rgba(22, 101, 52, 0.1) 0%, transparent 70%)',
+                borderRadius: '50%',
+                marginRight: '-80px',
+                marginTop: '-80px'
+            }}></div>
+
+            {/* Elemento decorativo inferior */}
+            <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '128px',
+                height: '128px',
+                background: 'radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 70%)',
+                borderRadius: '50%',
+                marginLeft: '-64px',
+                marginBottom: '-64px'
+            }}></div>
+
+            {/* Conteúdo */}
+            <div style={contentStyle}>
+                {/* Logo */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '0.5rem', paddingBottom: '1rem' }}>
+                    <div style={{ width: '100%', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                            src={LOGO_URL}
+                            alt="GMAD"
+                            style={{ maxWidth: '180px', maxHeight: '100%', objectFit: 'contain' }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                    </div>
+                </div>
+
+                {/* Relógio */}
+                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                    <div style={clockStyle}>
+                        {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div style={dateBadgeStyle}>
+                        <div style={{ width: '6px', height: '6px', backgroundColor: '#fb923c', borderRadius: '50%' }}></div>
+                        {dateTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                </div>
+
+                {/* Card Clima */}
+                <div style={weatherCardStyle}>
+                    {/* Elemento decorativo */}
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: '96px',
+                        height: '96px',
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
+                        borderRadius: '50%',
+                        marginRight: '-32px',
+                        marginTop: '-32px'
+                    }}></div>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: 'rgba(134, 239, 172, 0.7)',
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
+                        letterSpacing: '0.15em',
+                        marginBottom: '0.75rem',
+                        position: 'relative',
+                        zIndex: 10
+                    }}>
+                        <MapPin style={{ width: '12px', height: '12px' }} />
+                        {CITY_CONFIG.name}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 10 }}>
+                        <div>
+                            <span style={{ fontSize: '3.75rem', fontWeight: 700, color: 'white', letterSpacing: '-0.025em' }}>{weather.temp}°</span>
+                            <p style={{ color: '#fb923c', fontWeight: 600, fontSize: '1.125rem', textTransform: 'capitalize', marginTop: '0.25rem' }}>{weather.condition}</p>
+                        </div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.9)', transform: 'scale(1.5)', marginRight: '8px' }}>
+                            {weather.icon}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card Instagram */}
+                <div style={instagramCardStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9ca3af', marginBottom: '1rem', position: 'relative', zIndex: 10 }}>
+                        <div style={{
+                            padding: '6px',
+                            background: 'linear-gradient(to bottom right, #8b5cf6 0%, #ec4899 50%, #fb923c 100%)',
+                            borderRadius: '8px'
+                        }}>
+                            <Instagram size={14} style={{ color: 'white' }} />
+                        </div>
+                        <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#6b7280' }}>Siga-nos</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 10 }}>
+                        <img
+                            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://instagram.com/gmadmadville&color=166534"
+                            alt="Instagram QR"
+                            style={{ width: '6rem', height: '6rem', borderRadius: '0.75rem' }}
+                        />
+                        <div>
+                            <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534', marginBottom: '0.25rem' }}>@gmadmadville</p>
+                            <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Escaneie para seguir</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card Wi-Fi */}
+                <div style={wifiCardStyle}>
+                    {/* Pattern overlay */}
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: 0.1,
+                        backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+                        backgroundSize: '20px 20px'
+                    }}></div>
+
+                    {/* Ícone decorativo */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-24px',
+                        right: '-24px',
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        transform: 'rotate(12deg)'
+                    }}>
+                        <Wifi size={100} strokeWidth={1.5} />
+                    </div>
+
+                    <div style={{ position: 'relative', zIndex: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem' }}>
+                            <Wifi style={{ width: '20px', height: '20px' }} />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Wi-Fi Grátis</span>
+                        </div>
+                        <div>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.625rem', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>Rede</p>
+                            <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', lineHeight: 1.2 }}>GMAD Madville</p>
+                            <p style={{ fontSize: '1.125rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.8)' }}>Visitantes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    );
+}
