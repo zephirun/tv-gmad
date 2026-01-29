@@ -260,7 +260,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
                     </div>
                 </div>
                 <div style={{ position: 'absolute', bottom: '2px', right: '5px', fontSize: '9px', color: '#ccc', opacity: 0.5 }}>
-                    v1.2 (Pantone)
+                    v1.3 (Font Fix)
                 </div>
             </div>
         </aside>

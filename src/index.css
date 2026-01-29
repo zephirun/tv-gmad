@@ -9,8 +9,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --font-primary: 'Frutiger LT Std', 'Frutiger', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Frutiger LT Std', 'Frutiger', 'Outfit', sans-serif;
+  --font-primary: 'Outfit', 'Inter', 'Frutiger LT Std', 'Frutiger', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Frutiger LT Std', 'Frutiger', sans-serif;
 
   /* Cores GMAD - Pantone */
   --color-green-900: #275D38;
