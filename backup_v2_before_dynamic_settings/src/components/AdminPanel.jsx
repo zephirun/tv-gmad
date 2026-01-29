@@ -2,155 +2,29 @@ import React, { useState, useEffect } from 'react';
 import {
     Layout, X, Save, Loader2, AlertCircle,
     CheckCircle, FileImage, FileVideo, PlayCircle, Newspaper, Trash2,
-    Plus, Volume2, ArrowUp, ArrowDown, Image, Settings, Lock
+    Plus, Volume2, ArrowUp, ArrowDown, Image
 } from 'lucide-react';
 import { db, storage, appId } from '../firebase/client';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { LOGO_URL } from '../constants';
 
-export default function AdminPanel({ collectionId = 'tv_config', playlist, setPlaylist, news, setNews, onClose, user, settings }) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loginUser, setLoginUser] = useState('');
-    const [loginPass, setLoginPass] = useState('');
-    const [loginError, setLoginError] = useState('');
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [storedCredentials, setStoredCredentials] = useState({ adminUser: 'admin', adminPass: 'admin' });
-
+export default function AdminPanel({ collectionId = 'tv_config', playlist, setPlaylist, news, setNews, onClose, user }) {
     const [newItem, setNewItem] = useState({ type: 'image', src: '', title: '', subtitle: '', duration: 8000 });
     const [newNews, setNewNews] = useState('');
-    const [editSettings, setEditSettings] = useState(settings || {});
     const [errorMsg, setErrorMsg] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('playlist');
     const [itemsToDelete, setItemsToDelete] = useState([]);
 
-    // Force basic styles reset and fetch credentials
+    // Force basic styles reset
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-        const isAuth = sessionStorage.getItem('gmad_admin_auth');
-        if (isAuth === 'true') setIsAuthenticated(true);
-
-        // Fetch stored credentials from Firestore
-        const fetchCredentials = async () => {
-            if (!db) return;
-            try {
-                const credRef = doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings');
-                const credSnap = await getDoc(credRef);
-                if (credSnap.exists()) {
-                    const data = credSnap.data();
-                    if (data.adminUser && data.adminPass) {
-                        setStoredCredentials({ adminUser: data.adminUser, adminPass: data.adminPass });
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch credentials', err);
-            }
-        };
-        fetchCredentials();
-
         return () => {
             document.body.style.overflow = '';
         };
-    }, [collectionId]);
-
-    useEffect(() => {
-        if (settings) setEditSettings(settings);
-    }, [settings]);
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoggingIn(true);
-        setLoginError('');
-
-        // Re-fetch credentials in case they were updated
-        let creds = storedCredentials;
-        if (db) {
-            try {
-                const credRef = doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings');
-                const credSnap = await getDoc(credRef);
-                if (credSnap.exists()) {
-                    const data = credSnap.data();
-                    if (data.adminUser && data.adminPass) {
-                        creds = { adminUser: data.adminUser, adminPass: data.adminPass };
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch credentials', err);
-            }
-        }
-
-        if (loginUser === creds.adminUser && loginPass === creds.adminPass) {
-            setIsAuthenticated(true);
-            sessionStorage.setItem('gmad_admin_auth', 'true');
-        } else {
-            setLoginError('Usuário ou senha incorretos');
-        }
-        setIsLoggingIn(false);
-    };
-
-    // Styles Object using Pixels explicitly
-    const s = {
-        overlay: { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif' },
-        window: { width: '95%', height: '90%', maxWidth: '1600px', maxHeight: '1000px', backgroundColor: '#f3f4f6', borderRadius: '16px', display: 'flex', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
-        sidebar: { width: '300px', backgroundColor: '#14532d', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 },
-        main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' },
-        header: { height: '80px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
-        content: { flex: 1, overflowY: 'auto', padding: '30px' },
-
-        // Components
-        btnNav: (active) => ({
-            width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px',
-            backgroundColor: active ? '#f97316' : 'transparent', color: active ? 'white' : '#dcfce7',
-            border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', textAlign: 'left',
-            transition: 'background 0.2s'
-        }),
-        input: { height: '50px', width: '100%', padding: '0 15px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px', color: '#1f2937', backgroundColor: '#ffffff' },
-        btnAction: { height: '50px', padding: '0 25px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', color: 'white' },
-        card: { backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '20px' }
-    };
-
-    if (!isAuthenticated) {
-        return (
-            <div style={s.overlay}>
-                <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', width: '400px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-                    <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
-                        <div style={{ padding: '15px', borderRadius: '50%', backgroundColor: '#dcfce7', color: '#166534' }}>
-                            <Lock size={40} />
-                        </div>
-                    </div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '10px' }}>Acesso Restrito</h2>
-                    <p style={{ color: '#6b7280', marginBottom: '30px' }}>Entre com suas credenciais de administrador.</p>
-
-                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <input
-                            type="text"
-                            placeholder="Usuário"
-                            value={loginUser}
-                            onChange={e => setLoginUser(e.target.value)}
-                            style={{ ...s.input, backgroundColor: '#f9fafb' }}
-                        />
-                        <input
-                            type="password"
-                            placeholder="Senha"
-                            value={loginPass}
-                            onChange={e => setLoginPass(e.target.value)}
-                            style={{ ...s.input, backgroundColor: '#f9fafb' }}
-                        />
-                        {loginError && <div style={{ color: '#ef4444', fontSize: '14px', fontWeight: 'bold' }}>{loginError}</div>}
-
-                        <button type="submit" disabled={isLoggingIn} style={{ ...s.btnAction, justifyContent: 'center', backgroundColor: isLoggingIn ? '#9ca3af' : '#166534', marginTop: '10px' }}>
-                            {isLoggingIn ? <Loader2 className="animate-spin" size={20} /> : 'Entrar'}
-                        </button>
-                        <button type="button" onClick={onClose} style={{ border: 'none', background: 'none', color: '#6b7280', marginTop: '10px', cursor: 'pointer', textDecoration: 'underline' }}>
-                            Cancelar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
+    }, []);
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
@@ -260,7 +134,6 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                 // 2. Salvar Firestore na coleção correta
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'playlist'), { items: playlist });
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'news'), { items: news });
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings'), editSettings);
                 alert("Salvo com sucesso!");
             } else {
                 localStorage.setItem('gmad_playlist', JSON.stringify(playlist));
@@ -275,7 +148,26 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         }
     };
 
+    // Styles Object using Pixels explicitly
+    const s = {
+        overlay: { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif' },
+        window: { width: '95%', height: '90%', maxWidth: '1600px', maxHeight: '1000px', backgroundColor: '#f3f4f6', borderRadius: '16px', display: 'flex', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
+        sidebar: { width: '300px', backgroundColor: '#14532d', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 },
+        main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' },
+        header: { height: '80px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
+        content: { flex: 1, overflowY: 'auto', padding: '30px' },
 
+        // Components
+        btnNav: (active) => ({
+            width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px',
+            backgroundColor: active ? '#f97316' : 'transparent', color: active ? 'white' : '#dcfce7',
+            border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', textAlign: 'left',
+            transition: 'background 0.2s'
+        }),
+        input: { height: '50px', width: '100%', padding: '0 15px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px', color: '#1f2937', backgroundColor: '#ffffff' },
+        btnAction: { height: '50px', padding: '0 25px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', color: 'white' },
+        card: { backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '20px' }
+    };
 
     // ... (unchanged code) ...
 
@@ -302,10 +194,6 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                         <button onClick={() => setActiveTab('news')} style={s.btnNav(activeTab === 'news')}>
                             <Volume2 size={20} /> Notícias
                         </button>
-                        <div style={{ height: '10px' }}></div>
-                        <button onClick={() => setActiveTab('settings')} style={s.btnNav(activeTab === 'settings')}>
-                            <Settings size={20} /> Configurações
-                        </button>
                     </nav>
                     <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                         <button onClick={onClose} style={{ ...s.btnNav(false), border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px', justifyContent: 'center' }}>
@@ -319,7 +207,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                     <header style={s.header}>
                         <div>
                             <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>
-                                {activeTab === 'playlist' ? 'Gerenciar Playlist' : activeTab === 'news' ? 'Gerenciar Notícias' : 'Configurações da TV'}
+                                {activeTab === 'playlist' ? 'Gerenciar Playlist' : 'Gerenciar Notícias'}
                             </h2>
                         </div>
                         <button
@@ -487,64 +375,6 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                     ))}
                                 </div>
                             </>
-                        )}
-
-                        {activeTab === 'settings' && (
-                            <div style={s.card}>
-                                <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: '#374151' }}>Instagram Principal</h3>
-                                <div style={{ display: 'grid', gap: '15px', marginBottom: '30px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Usuário (@)</label>
-                                        <input type="text" style={s.input} value={editSettings.instagramUser || ''} onChange={e => setEditSettings({ ...editSettings, instagramUser: e.target.value })} placeholder="@exemplo" />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>URL do Perfil (para QR Code)</label>
-                                        <input type="text" style={s.input} value={editSettings.instagramUrl || ''} onChange={e => setEditSettings({ ...editSettings, instagramUrl: e.target.value })} placeholder="https://instagram.com/..." />
-                                    </div>
-                                </div>
-
-                                <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: '#374151' }}>Instagram Secundário (Opcional)</h3>
-                                <div style={{ display: 'grid', gap: '15px', marginBottom: '30px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Usuário (@)</label>
-                                        <input type="text" style={s.input} value={editSettings.instagramUser2 || ''} onChange={e => setEditSettings({ ...editSettings, instagramUser2: e.target.value })} placeholder="@exemplo" />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>URL do Perfil</label>
-                                        <input type="text" style={s.input} value={editSettings.instagramUrl2 || ''} onChange={e => setEditSettings({ ...editSettings, instagramUrl2: e.target.value })} placeholder="https://instagram.com/..." />
-                                    </div>
-                                </div>
-
-                                <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: '#374151' }}>Localização e Rede</h3>
-                                <div style={{ display: 'grid', gap: '15px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Cidade (Para Previsão do Tempo)</label>
-                                        <input type="text" style={s.input} value={editSettings.weatherCity || ''} onChange={e => setEditSettings({ ...editSettings, weatherCity: e.target.value })} placeholder="Ex: Joinville" />
-                                        <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>Digite apenas o nome da cidade. O sistema busca as coordenadas automaticamente.</div>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Nome da Rede Wi-Fi</label>
-                                        <input type="text" style={s.input} value={editSettings.wifiSsid || ''} onChange={e => setEditSettings({ ...editSettings, wifiSsid: e.target.value })} placeholder="Ex: GMAD Visitantes" />
-                                    </div>
-                                </div>
-
-                                <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '30px 0' }} />
-
-                                <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', color: '#374151', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Lock size={20} color="#f97316" /> Credenciais do Admin
-                                </h3>
-                                <div style={{ display: 'grid', gap: '15px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Usuário</label>
-                                        <input type="text" style={s.input} value={editSettings.adminUser || ''} onChange={e => setEditSettings({ ...editSettings, adminUser: e.target.value })} placeholder="admin" />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#6b7280', marginBottom: '5px' }}>Nova Senha</label>
-                                        <input type="password" style={s.input} value={editSettings.adminPass || ''} onChange={e => setEditSettings({ ...editSettings, adminPass: e.target.value })} placeholder="••••••••" />
-                                        <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>Deixe em branco para manter a senha atual. Padrão inicial: admin/admin</div>
-                                    </div>
-                                </div>
-                            </div>
                         )}
                     </div>
                 </div>

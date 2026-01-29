@@ -7,7 +7,7 @@ export default function NewsTicker({ newsItems }) {
         <div style={{
             width: '100%',
             height: '70px',
-            background: '#275D38', // Pantone 7483C
+            background: '#166534',
             display: 'flex',
             WebkitDisplay: 'flex',
             alignItems: 'center',
@@ -19,7 +19,7 @@ export default function NewsTicker({ newsItems }) {
         }}>
             {/* Badge INFO GMAD */}
             <div style={{
-                background: '#E35205', // Pantone 166C
+                background: '#ea580c',
                 color: 'white',
                 height: '100%',
                 display: 'flex',
@@ -46,7 +46,7 @@ export default function NewsTicker({ newsItems }) {
                         fontSize: '22px',
                         fontWeight: 800,
                         letterSpacing: '0.03em',
-                        fontFamily: "var(--font-display)"
+                        fontFamily: "'Outfit', 'Arial', sans-serif"
                     }}>GMAD</div>
                 </div>
             </div>
@@ -81,7 +81,7 @@ export default function NewsTicker({ newsItems }) {
                             WebkitAlignItems: 'center'
                         }}>
                             <span style={{
-                                color: '#E35205', // Pantone 166C
+                                color: '#f97316',
                                 margin: '0 28px',
                                 fontSize: '22px',
                                 fontWeight: 'bold'
@@ -89,7 +89,7 @@ export default function NewsTicker({ newsItems }) {
                             <span style={{
                                 color: 'white',
                                 fontSize: '22px',
-                                fontFamily: "var(--font-display)",
+                                fontFamily: "'Outfit', 'Arial', sans-serif",
                                 fontWeight: 500,
                                 letterSpacing: '0.01em'
                             }}>

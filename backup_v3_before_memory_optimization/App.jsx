@@ -25,7 +25,7 @@ export default function App() {
   // eslint-disable-next-line no-unused-vars
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const [weather, setWeather] = useState({ temp: '--', condition: 'Carregando...', weatherCode: 0 });
+  const [weather, setWeather] = useState({ temp: '--', condition: 'Carregando...', icon: <CloudSun className="w-12 h-12 text-gray-400" /> });
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dateTime, setDateTime] = useState(new Date());
@@ -109,11 +109,12 @@ export default function App() {
         const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America%2FSao_Paulo`);
         const d = await r.json();
         const i = getWeatherDescription(d.current.weather_code);
-        setWeather({ temp: Math.round(d.current.temperature_2m), condition: i.label, weatherCode: d.current.weather_code });
+        setWeather({ temp: Math.round(d.current.temperature_2m), condition: i.label, icon: i.icon });
       } catch (e) {
         // Fallback estático para navegadores antigos
         console.warn('Weather fetch error, using static fallback:', e);
-        setWeather({ temp: 25, condition: 'Céu Limpo', weatherCode: 0 });
+        const fallback = getWeatherDescription(0);
+        setWeather({ temp: 25, condition: fallback.label, icon: fallback.icon });
       }
     };
 
@@ -123,7 +124,9 @@ export default function App() {
       const interval = setInterval(fetchWeather, 1800000);
       return () => clearInterval(interval);
     } catch (e) {
-      setWeather({ temp: 25, condition: 'Céu Limpo', weatherCode: 0 });
+      console.warn('Weather setup failed:', e);
+      const fallback = getWeatherDescription(0);
+      setWeather({ temp: 25, condition: fallback.label, icon: fallback.icon });
     }
   }, [settings?.weatherCity]);
 
@@ -213,70 +216,9 @@ export default function App() {
     return () => { unsubP(); unsubN(); unsubS(); };
   }, [user, collectionId]);
 
-  // ==========================================
-  // ANTI-STANDBY: Mantém a TV acordada
-  // ==========================================
-  useEffect(() => {
-    let wakeLock = null;
-    let keepAliveInterval = null;
-
-    // Tenta usar Wake Lock API (navegadores modernos)
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-          console.log('Wake Lock ativado');
-
-          // Re-ativar quando a página voltar ao foco
-          document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible' && !wakeLock) {
-              wakeLock = await navigator.wakeLock.request('screen');
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Wake Lock não disponível:', err);
-      }
-    };
-
-    requestWakeLock();
-
-    // Fallback: Micro-interação a cada 30s para evitar standby em TVs antigas
-    // Isso simula atividade de usuário de forma imperceptível
-    keepAliveInterval = setInterval(() => {
-      // Dispara evento de scroll mínimo (não visível)
-      window.scrollBy(0, 0);
-
-      // Força repaint mínimo
-      const body = document.body;
-      body.style.opacity = '0.9999';
-      requestAnimationFrame(() => {
-        body.style.opacity = '1';
-      });
-    }, 30000);
-
-    return () => {
-      if (wakeLock) {
-        wakeLock.release();
-        wakeLock = null;
-      }
-      clearInterval(keepAliveInterval);
-    };
-  }, []);
-
   useEffect(() => {
     const clockInterval = setInterval(() => setDateTime(new Date()), 1000);
-
-    // Recarregar a página a cada 30 minutos para limpar memória e previnir travamentos (TVs com pouca RAM)
-    const reloadInterval = setInterval(() => {
-      console.log("Executando recarregamento periódico de manutenção...");
-      window.location.reload();
-    }, 30 * 60 * 1000); // 30 minutos
-
-    return () => {
-      clearInterval(clockInterval);
-      clearInterval(reloadInterval);
-    };
+    return () => clearInterval(clockInterval);
   }, []);
   const next = useCallback(() => setCurrentIndex((p) => (p + 1) % playlist.length), [playlist]);
 
@@ -301,7 +243,7 @@ export default function App() {
     color: 'white',
     overflow: 'hidden',
     position: 'relative',
-    fontFamily: "var(--font-primary)"
+    fontFamily: "'Outfit', 'Inter', sans-serif"
   };
 
   const mainContentStyle = {

@@ -9,17 +9,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --font-primary: 'Frutiger LT Std', 'Frutiger', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Frutiger LT Std', 'Frutiger', 'Outfit', sans-serif;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
 
-  /* Cores GMAD - Pantone */
-  --color-green-900: #275D38;
-  /* Pantone 7483C */
-  --color-green-800: #275D38;
-  --color-green-700: #275D38;
-  --color-orange-500: #E35205;
-  /* Pantone 166C */
-  --color-orange-600: #E35205;
+  /* Cores GMAD */
+  --color-green-900: #14532d;
+  --color-green-800: #166534;
+  --color-green-700: #15803d;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
 }
 
 html,
@@ -307,31 +305,31 @@ h6 {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: -webkit-linear-gradient(top, #275D38, #275D38);
-  background: linear-gradient(180deg, #275D38, #275D38);
+  background: -webkit-linear-gradient(top, #166534, #15803d);
+  background: linear-gradient(180deg, #166534, #15803d);
   border-radius: 10px;
   border: 2px solid #f1f5f9;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: -webkit-linear-gradient(top, #275D38, #275D38);
-  background: linear-gradient(180deg, #275D38, #275D38);
+  background: -webkit-linear-gradient(top, #14532d, #166534);
+  background: linear-gradient(180deg, #14532d, #166534);
 }
 
 /* ===== CORES DE SELEÇÃO ===== */
 ::selection {
-  background-color: #E35205;
+  background-color: #f97316;
   color: white;
 }
 
 ::-moz-selection {
-  background-color: #E35205;
+  background-color: #f97316;
   color: white;
 }
 
 /* ===== FOCUS RING ===== */
 *:focus-visible {
-  outline: 2px solid #E35205;
+  outline: 2px solid #f97316;
   outline-offset: 2px;
 }
 
@@ -352,19 +350,19 @@ h6 {
 
 /* Barra de título do player */
 .tv-title-bar {
-  background: #275D38;
-  background: -webkit-linear-gradient(left, #275D38 0%, #275D38 50%, #275D38 100%);
-  background: linear-gradient(to right, #275D38 0%, #275D38 50%, #275D38 100%);
-  border-top: 4px solid #E35205;
+  background: #166534;
+  background: -webkit-linear-gradient(left, #14532d 0%, #166534 50%, #14532d 100%);
+  background: linear-gradient(to right, #14532d 0%, #166534 50%, #14532d 100%);
+  border-top: 4px solid #f97316;
   padding: 1.5rem;
   position: relative;
 }
 
 /* Card de clima */
 .tv-weather-card {
-  background: #275D38;
-  background: -webkit-linear-gradient(top left, #275D38 0%, #275D38 100%);
-  background: linear-gradient(to bottom right, #275D38 0%, #275D38 100%);
+  background: #166534;
+  background: -webkit-linear-gradient(top left, #166534 0%, #14532d 100%);
+  background: linear-gradient(to bottom right, #166534 0%, #14532d 100%);
   border-radius: 1.5rem;
   padding: 1.25rem;
   position: relative;
@@ -374,9 +372,9 @@ h6 {
 
 /* Card de Wi-Fi */
 .tv-wifi-card {
-  background: #E35205;
-  background: -webkit-linear-gradient(left, #E35205 0%, #E35205 100%);
-  background: linear-gradient(to right, #E35205 0%, #E35205 100%);
+  background: #f97316;
+  background: -webkit-linear-gradient(left, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(to right, #f97316 0%, #ea580c 100%);
   border-radius: 1.5rem;
   padding: 1.25rem;
   position: relative;
@@ -386,9 +384,9 @@ h6 {
 
 /* News Ticker container */
 .tv-ticker {
-  background: #275D38;
-  background: -webkit-linear-gradient(left, #275D38 0%, #275D38 100%);
-  background: linear-gradient(to right, #275D38 0%, #275D38 100%);
+  background: #166534;
+  background: -webkit-linear-gradient(left, #14532d 0%, #166534 100%);
+  background: linear-gradient(to right, #14532d 0%, #166534 100%);
   height: 70px;
   overflow: hidden;
   position: relative;
@@ -398,7 +396,7 @@ h6 {
 .tv-spinner {
   width: 64px;
   height: 64px;
-  border: 4px solid #E35205;
+  border: 4px solid #f97316;
   border-top-color: transparent;
   border-radius: 50%;
   -webkit-animation: spin 1s linear infinite;
@@ -422,9 +420,9 @@ h6 {
 
 .tv-progress-dot-active {
   width: 40px;
-  background: #E35205;
-  background: -webkit-linear-gradient(left, #E35205 0%, #E35205 100%);
-  background: linear-gradient(to right, #E35205 0%, #E35205 100%);
+  background: #f97316;
+  background: -webkit-linear-gradient(left, #fb923c 0%, #ea580c 100%);
+  background: linear-gradient(to right, #fb923c 0%, #ea580c 100%);
 }
 
 .tv-progress-dot-inactive {

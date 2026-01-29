@@ -8,32 +8,18 @@ export default defineConfig({
     react(),
     // Plugin para suporte a navegadores antigos (Smart TVs, etc)
     legacy({
-      targets: ['defaults', 'not IE 11', 'chrome >= 40', 'firefox >= 40', 'safari >= 9', 'opera >= 30'],
+      targets: ['defaults', 'not IE 11', 'chrome >= 49', 'firefox >= 52', 'safari >= 10'],
       additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
       renderLegacyChunks: true,
-      modernPolyfills: true,
       polyfills: [
         'es.promise',
         'es.promise.finally',
         'es.symbol',
-        'es.symbol.iterator',
         'es.array.iterator',
         'es.object.assign',
         'es.object.keys',
-        'es.object.entries',
-        'es.object.values',
         'es.array.includes',
-        'es.array.find',
-        'es.array.find-index',
         'es.string.includes',
-        'es.string.starts-with',
-        'es.string.ends-with',
-        'es.map',
-        'es.set',
-        'es.weak-map',
-        'es.weak-set',
-        'web.url',
-        'web.url-search-params',
       ]
     })
   ],
