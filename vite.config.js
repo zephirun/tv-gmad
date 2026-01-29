@@ -45,13 +45,14 @@ export default defineConfig({
     // Compatibilidade com navegadores mais antigos
     target: 'es2015',
     // Gera sourcemaps para debug
-    sourcemap: false,
+    sourcemap: true,
     // Otimizações
     minify: 'terser',
+    // Mantém logs para debug
     terserOptions: {
       compress: {
-        drop_console: true,
-        drop_debugger: true,
+        drop_console: false,
+        drop_debugger: false,
       }
     }
   }
