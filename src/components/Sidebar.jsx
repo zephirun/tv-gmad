@@ -3,7 +3,55 @@ import { Settings, MapPin, Wifi, Instagram } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LOGO_URL, CITY_CONFIG, getWeatherDescription } from '../constants';
 
-export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings }) {
+// Sub-componente Relógio para isolar re-renders de 1 segundo
+const Clock = () => {
+    const [dateTime, setDateTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setDateTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const clockStyle = {
+        fontSize: '6.8rem',
+        lineHeight: 1,
+        fontWeight: 200,
+        color: '#275D38',
+        letterSpacing: '-0.025em',
+        marginBottom: '0.5rem',
+        fontFamily: "var(--font-display)"
+    };
+
+    const dateBadgeStyle = {
+        display: 'inline-flex',
+        WebkitDisplay: 'inline-flex',
+        alignItems: 'center',
+        WebkitAlignItems: 'center',
+        gap: '0.5rem',
+        backgroundColor: '#E35205',
+        color: 'white',
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        paddingTop: '0.5rem',
+        paddingBottom: '0.5rem',
+        borderRadius: '9999px',
+        fontSize: '1rem',
+        fontWeight: 500
+    };
+
+    return (
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+            <div style={clockStyle}>
+                {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div style={dateBadgeStyle}>
+                {dateTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
+        </div>
+    );
+};
+
+export default function Sidebar({ weather, setIsAdminOpen, settings }) {
     const [instaIndex, setInstaIndex] = useState(0);
 
     const instagramProfiles = [];
@@ -16,16 +64,10 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
         instagramProfiles.push({ user: '@gmadmadville', url: 'https://instagram.com/gmadmadville' });
     }
 
-    useEffect(() => {
-        if (instagramProfiles.length <= 1) return;
-        const interval = setInterval(() => {
-            setInstaIndex(prev => (prev + 1) % instagramProfiles.length);
-        }, 30000); // Aumentado de 10s para 30s para reduzir criação de imagens QR
-        return () => clearInterval(interval);
-    }, [instagramProfiles.length]);
+    // Simplificação Radical: Apenas mostra o primeiro perfil, sem rotação
+    const currentInsta = instagramProfiles[0];
 
-    const currentInsta = instagramProfiles[instaIndex] || instagramProfiles[0];
-
+    // Estilos (mantidos iguais)
     const sidebarStyle = {
         width: '22rem',
         minWidth: '22rem',
@@ -58,16 +100,6 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
         zIndex: 10
     };
 
-    const clockStyle = {
-        fontSize: '6.8rem',
-        lineHeight: 1,
-        fontWeight: 200,
-        color: '#275D38',
-        letterSpacing: '-0.025em',
-        marginBottom: '0.5rem',
-        fontFamily: "var(--font-display)"
-    };
-
     const weatherCardStyle = {
         background: '#275D38',
         borderRadius: '24px',
@@ -94,23 +126,6 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
         position: 'relative',
         overflow: 'hidden',
         marginBottom: '0.5rem'
-    };
-
-    const dateBadgeStyle = {
-        display: 'inline-flex',
-        WebkitDisplay: 'inline-flex',
-        alignItems: 'center',
-        WebkitAlignItems: 'center',
-        gap: '0.5rem',
-        backgroundColor: '#E35205',
-        color: 'white',
-        paddingLeft: '1rem',
-        paddingRight: '1rem',
-        paddingTop: '0.5rem',
-        paddingBottom: '0.5rem',
-        borderRadius: '9999px',
-        fontSize: '1rem',
-        fontWeight: 500
     };
 
     return (
@@ -152,15 +167,8 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
                     </div>
                 </div>
 
-                {/* Relógio */}
-                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                    <div style={clockStyle}>
-                        {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div style={dateBadgeStyle}>
-                        {dateTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                </div>
+                {/* Relógio (Isolado) */}
+                <Clock />
 
                 {/* Card Clima */}
                 <div style={weatherCardStyle}>
@@ -191,7 +199,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
                     </div>
                 </div>
 
-                {/* Card Instagram */}{/* Card Instagram */}
+                {/* Card Instagram */}
                 <div style={instagramCardStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
                         <div style={{
@@ -259,9 +267,7 @@ export default function Sidebar({ dateTime, weather, setIsAdminOpen, settings })
                         </div>
                     </div>
                 </div>
-                <div style={{ position: 'absolute', bottom: '2px', right: '5px', fontSize: '9px', color: '#ccc', opacity: 0.5 }}>
-                    v1.4 (Frutiger Priority)
-                </div>
+
             </div>
         </aside>
     );

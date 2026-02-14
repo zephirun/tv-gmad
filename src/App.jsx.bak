@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { backend } from './services/backend';
+import { CloudSun } from 'lucide-react';
+import { auth, db, appId } from './firebase/client';
+import { signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
-// ... imports ...
+
 import AdminPanel from './components/AdminPanel';
 import Sidebar from './components/Sidebar';
 
@@ -31,7 +34,7 @@ export default function App() {
 
   const currentItem = playlist[currentIndex] || null;
 
-  // Estado para controlar se Firebase está disponível (mantido nome por compatibilidade, mas refere-se ao backend geral)
+  // Estado para controlar se Firebase está disponível
   const [firebaseAvailable, setFirebaseAvailable] = useState(true);
 
   // Security
@@ -59,7 +62,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Fallback para backend indisponível
+    // Fallback para navegadores antigos sem suporte ao Firebase
     const loadFallbackData = () => {
       setIsLoadingData(false);
       setFirebaseAvailable(false);
@@ -77,15 +80,20 @@ export default function App() {
       }
     };
 
+    if (!auth) {
+      loadFallbackData();
+      return;
+    }
+
     const initAuth = async () => {
       try {
         if (typeof window !== 'undefined' && window.__initial_auth_token) {
-          await backend.auth.signInWithCustomToken(window.__initial_auth_token);
+          await signInWithCustomToken(auth, window.__initial_auth_token);
         } else {
-          await backend.auth.signInAnonymously();
+          await signInAnonymously(auth);
         }
       } catch (err) {
-        console.error('Backend auth failed, using fallback mode:', err);
+        console.error('Firebase auth failed, using fallback mode:', err);
         loadFallbackData();
       }
     };
@@ -94,7 +102,7 @@ export default function App() {
     if (new URLSearchParams(window.location.search).get('admin') === 'true') setIsAdminOpen(true);
 
     try {
-      return backend.auth.onAuthStateChanged(setUser);
+      return onAuthStateChanged(auth, setUser);
     } catch (err) {
       console.error('onAuthStateChanged failed:', err);
       loadFallbackData();
@@ -148,29 +156,29 @@ export default function App() {
   const collectionId = pathSegment ? `tv_config_${pathSegment}` : 'tv_config';
 
   useEffect(() => {
-    if (!user) return; // Aguarda usuário autenticado
+    if (!user || !db) return;
 
     // Playlist Sync
-    const unsubP = backend.db.subscribeToDoc(collectionId, 'playlist', async (data) => {
-      if (data) {
-        // Fix: Handle both seeding format (raw array) and app format ({ items: [] })
-        const items = Array.isArray(data) ? data : (data.items || []);
-        setPlaylist(items);
+    const unsubP = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'playlist'), async (s) => {
+      if (s.exists()) {
+        setPlaylist(s.data().items || []);
         setIsLoadingData(false);
       } else {
         // Se coleção não existe, inicializa
         if (collectionId === 'tv_config') {
           // Principal vazia -> Default
-          await backend.db.setDoc(collectionId, 'playlist', { items: DEFAULT_PLAYLIST });
+          await setDoc(s.ref, { items: DEFAULT_PLAYLIST });
         } else {
           // Nova TV (ex: Madville) -> Tenta copiar da Principal
           try {
-            const mainItems = await backend.db.getDoc('tv_config', 'playlist');
-            const itemsToUse = (mainItems && (Array.isArray(mainItems) ? mainItems : mainItems.items)) || DEFAULT_PLAYLIST;
-            await backend.db.setDoc(collectionId, 'playlist', { items: itemsToUse });
+            const mainRef = doc(db, 'artifacts', appId, 'public', 'data', 'tv_config', 'playlist');
+            const mainSnap = await getDoc(mainRef);
+            const itemsToUse = mainSnap.exists() ? mainSnap.data().items : DEFAULT_PLAYLIST;
+            await setDoc(s.ref, { items: itemsToUse });
+            // O setDoc fará o snapshot disparar novamente com os dados
           } catch (e) {
             console.error("Erro clonando config", e);
-            await backend.db.setDoc(collectionId, 'playlist', { items: DEFAULT_PLAYLIST });
+            await setDoc(s.ref, { items: DEFAULT_PLAYLIST });
           }
         }
         setIsLoadingData(false);
@@ -178,31 +186,31 @@ export default function App() {
     });
 
     // News Sync
-    const unsubN = backend.db.subscribeToDoc(collectionId, 'news', async (data) => {
-      if (data) {
-        // Fix: Handle both seeding format (raw array) and app format ({ items: [] })
-        const items = Array.isArray(data) ? data : (data.items || []);
-        setNewsItems(items);
+    const unsubN = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'news'), async (s) => {
+      if (s.exists()) {
+        setNewsItems(s.data().items || []);
       } else {
         if (collectionId === 'tv_config') {
-          await backend.db.setDoc(collectionId, 'news', { items: DEFAULT_NEWS });
+          await setDoc(s.ref, { items: DEFAULT_NEWS });
         } else {
+          // Tenta copiar notícias da principal
           try {
-            const mainNews = await backend.db.getDoc('tv_config', 'news');
-            const itemsToUse = (mainNews && (Array.isArray(mainNews) ? mainNews : mainNews.items)) || DEFAULT_NEWS;
-            await backend.db.setDoc(collectionId, 'news', { items: itemsToUse });
+            const mainRef = doc(db, 'artifacts', appId, 'public', 'data', 'tv_config', 'news');
+            const mainSnap = await getDoc(mainRef);
+            const itemsToUse = mainSnap.exists() ? mainSnap.data().items : DEFAULT_NEWS;
+            await setDoc(s.ref, { items: itemsToUse });
           } catch (error) {
             console.error("News sync failed", error);
-            await backend.db.setDoc(collectionId, 'news', { items: DEFAULT_NEWS });
+            await setDoc(s.ref, { items: DEFAULT_NEWS });
           }
         }
       }
     });
 
     // Settings Sync
-    const unsubS = backend.db.subscribeToDoc(collectionId, 'settings', async (data) => {
-      if (data) {
-        setSettings(data);
+    const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings'), async (s) => {
+      if (s.exists()) {
+        setSettings(s.data());
       } else {
         const defaults = {
           instagramUser: '@gmadmadville',
@@ -212,24 +220,21 @@ export default function App() {
         };
 
         if (collectionId === 'tv_config') {
-          await backend.db.setDoc(collectionId, 'settings', defaults);
+          await setDoc(s.ref, defaults);
         } else {
           try {
-            const mainSettings = await backend.db.getDoc('tv_config', 'settings');
-            await backend.db.setDoc(collectionId, 'settings', mainSettings || defaults);
+            const mainRef = doc(db, 'artifacts', appId, 'public', 'data', 'tv_config', 'settings');
+            const mainSnap = await getDoc(mainRef);
+            await setDoc(s.ref, mainSnap.exists() ? mainSnap.data() : defaults);
           } catch (error) {
             console.error("Settings sync failed", error);
-            await backend.db.setDoc(collectionId, 'settings', defaults);
+            await setDoc(s.ref, defaults);
           }
         }
       }
     });
 
-    return () => {
-      if (unsubP) unsubP();
-      if (unsubN) unsubN();
-      if (unsubS) unsubS();
-    };
+    return () => { unsubP(); unsubN(); unsubS(); };
   }, [user, collectionId]);
 
   // ==========================================

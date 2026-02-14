@@ -27,19 +27,28 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
 
     // FORCE LOAD: Como usamos preload="none", precisamos mandar carregar explicitamente
     useEffect(() => {
-        if (currentItem?.type === 'video' && videoRef.current) {
+        const vid = videoRef.current;
+        if (currentItem?.type === 'video' && vid) {
             console.log(`Forçando carregamento do vídeo: ${currentItem.id}`);
-            videoRef.current.load(); // Importante para resetar buffer
+            vid.load();
 
-            // Tenta dar play logo de cara, o catch vai cair no handleCanPlayThrough se falhar ou no fallback
-            const p = videoRef.current.play();
+            const p = vid.play();
             if (p !== undefined) {
                 p.catch(e => {
                     console.log("Play imediato falhou (normal, esperando carregar):", e);
-                    // Não faz nada, espera o onCanPlayThrough ou o usuario interagir (não é o caso aqui)
                 });
             }
         }
+
+        // LIMPEZA AGRESSIVA DE MEMÓRIA
+        return () => {
+            if (vid) {
+                console.log("Limpando recursos de vídeo...");
+                vid.pause();
+                vid.removeAttribute('src'); // Remove referência do DOM
+                vid.load(); // Força o browser a liberar o buffer
+            }
+        };
     }, [currentItem]);
 
 
@@ -142,11 +151,12 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
 
             {/* SLIDE: IMAGEM */}
             {currentItem.type === 'image' && (
-                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                <div style={{ width: '100%', height: '100%', position: 'relative', background: 'black' }}>
                     <img
                         key={`img-${currentItem.id}`} // Força recriação do DOM
                         src={currentItem.src}
                         alt="Slide"
+                        decoding="async" // Otimização: Decodifica fora da main thread
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         onLoad={() => setIsLoading(false)}
                         onError={(e) => {
@@ -154,13 +164,6 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
                             next();
                         }}
                     />
-                    {/* Background Blur Simples */}
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        zIndex: -1,
-                        background: 'radial-gradient(circle, #222 0%, #000 100%)'
-                    }}></div>
                 </div>
             )}
 

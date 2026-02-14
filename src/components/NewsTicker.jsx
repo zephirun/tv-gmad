@@ -1,13 +1,26 @@
 import React from 'react';
 
 export default function NewsTicker({ newsItems }) {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+
+    // Rotação de notícias estática (sem animação de scroll contínuo)
+    React.useEffect(() => {
+        if (!newsItems || newsItems.length === 0) return;
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % newsItems.length);
+        }, 8000); // Troca a cada 8 segundos
+        return () => clearInterval(interval);
+    }, [newsItems]);
+
     if (!newsItems || newsItems.length === 0) return null;
+
+    const currentItem = newsItems[currentIndex];
 
     return (
         <div style={{
             width: '100%',
             height: '70px',
-            background: '#275D38', // Pantone 7483C
+            background: '#275D38', // Flat Color
             display: 'flex',
             WebkitDisplay: 'flex',
             alignItems: 'center',
@@ -15,11 +28,12 @@ export default function NewsTicker({ newsItems }) {
             overflow: 'hidden',
             flexShrink: 0,
             WebkitFlexShrink: 0,
-            zIndex: 100
+            zIndex: 100,
+            borderTop: '2px solid #E35205' // Separador simples
         }}>
             {/* Badge INFO GMAD */}
             <div style={{
-                background: '#E35205', // Pantone 166C
+                background: '#E35205',
                 color: 'white',
                 height: '100%',
                 display: 'flex',
@@ -31,13 +45,11 @@ export default function NewsTicker({ newsItems }) {
                 padding: '0 28px',
                 flexShrink: 0,
                 WebkitFlexShrink: 0,
-                minWidth: '120px'
+                minWidth: '160px'
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         fontSize: '11px',
-                        opacity: 0.9,
-                        letterSpacing: '0.12em',
                         fontWeight: 700,
                         marginBottom: '2px',
                         textTransform: 'uppercase'
@@ -45,71 +57,34 @@ export default function NewsTicker({ newsItems }) {
                     <div style={{
                         fontSize: '22px',
                         fontWeight: 800,
-                        letterSpacing: '0.03em',
                         fontFamily: "var(--font-display)"
                     }}>GMAD</div>
                 </div>
             </div>
 
-            {/* Marquee Container */}
+            {/* Container da Notícia (Estático) */}
             <div style={{
                 flex: 1,
                 WebkitFlex: 1,
-                overflow: 'hidden',
-                position: 'relative',
-                height: '100%',
+                padding: '0 30px',
                 display: 'flex',
                 WebkitDisplay: 'flex',
                 alignItems: 'center',
                 WebkitAlignItems: 'center',
-                paddingLeft: '20px'
+                justifyContent: 'flex-start',
+                WebkitJustifyContent: 'flex-start'
             }}>
-                <div style={{
-                    whiteSpace: 'nowrap',
-                    WebkitAnimation: 'ticker 55s linear infinite',
-                    animation: 'ticker 55s linear infinite',
-                    display: 'flex',
-                    WebkitDisplay: 'flex',
-                    alignItems: 'center',
-                    WebkitAlignItems: 'center'
+                <span style={{
+                    color: 'white',
+                    fontSize: '24px', // Aumentei um pouco para legibilidade
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.2
                 }}>
-                    {[...newsItems, ...newsItems].map((item, index) => (
-                        <div key={index} style={{
-                            display: 'inline-flex',
-                            WebkitDisplay: 'inline-flex',
-                            alignItems: 'center',
-                            WebkitAlignItems: 'center'
-                        }}>
-                            <span style={{
-                                color: '#E35205', // Pantone 166C
-                                margin: '0 28px',
-                                fontSize: '22px',
-                                fontWeight: 'bold'
-                            }}>●</span>
-                            <span style={{
-                                color: 'white',
-                                fontSize: '22px',
-                                fontFamily: "var(--font-display)",
-                                fontWeight: 500,
-                                letterSpacing: '0.01em'
-                            }}>
-                                {item}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+                    {currentItem}
+                </span>
             </div>
-
-            <style>{`
-                @-webkit-keyframes ticker {
-                    0% { -webkit-transform: translateX(0); transform: translateX(0); }
-                    100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
-                }
-                @keyframes ticker {
-                    0% { -webkit-transform: translateX(0); transform: translateX(0); }
-                    100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
-                }
-            `}</style>
         </div>
     );
 }

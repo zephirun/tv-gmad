@@ -8,8 +8,13 @@ export default defineConfig({
     react(),
     // Plugin para suporte a navegadores antigos (Smart TVs, etc)
     legacy({
-      targets: ['defaults', 'not IE 11', 'chrome >= 40', 'firefox >= 40', 'safari >= 9', 'opera >= 30'],
-      additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
+      targets: ['> 0.5%', 'last 2 versions', 'Firefox ESR', 'not dead', 'chrome >= 30', 'android >= 4', 'safari >= 7', 'opera >= 20'],
+      additionalLegacyPolyfills: [
+        'regenerator-runtime/runtime',
+        'intersection-observer',
+        'proxy-polyfill/proxy.min.js',
+        'whatwg-fetch'
+      ],
       renderLegacyChunks: true,
       modernPolyfills: true,
       polyfills: [
@@ -34,6 +39,9 @@ export default defineConfig({
         'es.weak-set',
         'web.url',
         'web.url-search-params',
+        'web.dom-collections.for-each',
+        'es.object.get-own-property-descriptors',
+        'es.promise.all-settled'
       ]
     })
   ],

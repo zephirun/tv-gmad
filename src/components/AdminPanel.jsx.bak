@@ -4,7 +4,9 @@ import {
     CheckCircle, FileImage, FileVideo, PlayCircle, Newspaper, Trash2,
     Plus, Volume2, ArrowUp, ArrowDown, Image, Settings, Lock
 } from 'lucide-react';
-import { backend } from '../services/backend';
+import { db, storage, appId } from '../firebase/client';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { LOGO_URL } from '../constants';
 
 export default function AdminPanel({ collectionId = 'tv_config', playlist, setPlaylist, news, setNews, onClose, user, settings }) {
@@ -32,10 +34,15 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
 
         // Fetch stored credentials from Firestore
         const fetchCredentials = async () => {
+            if (!db) return;
             try {
-                const data = await backend.db.getDoc(collectionId, 'settings');
-                if (data && data.adminUser && data.adminPass) {
-                    setStoredCredentials({ adminUser: data.adminUser, adminPass: data.adminPass });
+                const credRef = doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings');
+                const credSnap = await getDoc(credRef);
+                if (credSnap.exists()) {
+                    const data = credSnap.data();
+                    if (data.adminUser && data.adminPass) {
+                        setStoredCredentials({ adminUser: data.adminUser, adminPass: data.adminPass });
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch credentials', err);
@@ -57,30 +64,28 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         setIsLoggingIn(true);
         setLoginError('');
 
-        try {
-            // First try Supabase/Backend Auth
-            await backend.auth.signInWithPassword(loginUser, loginPass);
-            setIsAuthenticated(true);
-            sessionStorage.setItem('gmad_admin_auth', 'true');
-        } catch (authErr) {
-            console.log("Backend auth failed, trying legacy Firestore check", authErr);
-            // Fallback: Check stored credentials in Firestore (Legacy/Firebase)
-            let creds = storedCredentials;
+        // Re-fetch credentials in case they were updated
+        let creds = storedCredentials;
+        if (db) {
             try {
-                const data = await backend.db.getDoc(collectionId, 'settings');
-                if (data && data.adminUser && data.adminPass) {
-                    creds = { adminUser: data.adminUser, adminPass: data.adminPass };
+                const credRef = doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings');
+                const credSnap = await getDoc(credRef);
+                if (credSnap.exists()) {
+                    const data = credSnap.data();
+                    if (data.adminUser && data.adminPass) {
+                        creds = { adminUser: data.adminUser, adminPass: data.adminPass };
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch credentials', err);
             }
+        }
 
-            if (loginUser === creds.adminUser && loginPass === creds.adminPass) {
-                setIsAuthenticated(true);
-                sessionStorage.setItem('gmad_admin_auth', 'true');
-            } else {
-                setLoginError('Usuário ou senha incorretos');
-            }
+        if (loginUser === creds.adminUser && loginPass === creds.adminPass) {
+            setIsAuthenticated(true);
+            sessionStorage.setItem('gmad_admin_auth', 'true');
+        } else {
+            setLoginError('Usuário ou senha incorretos');
         }
         setIsLoggingIn(false);
     };
@@ -164,7 +169,11 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         setErrorMsg('');
 
         try {
-            const downloadURL = await backend.storage.uploadFile(file);
+            if (!storage) throw new Error("Storage inválido");
+            const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const storageRef = ref(storage, `artifacts/${appId}/public/${Date.now()}_${safeName}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
             setNewItem(prev => ({ ...prev, src: downloadURL }));
             setIsUploading(false);
         } catch (error) {
@@ -197,8 +206,8 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
 
     const handleDeleteItem = (id) => {
         const item = playlist.find(i => i.id === id);
-        // Track file for deletion if it belongs to Firebase or Supabase Storage
-        if (item && item.src && (item.src.includes('firebasestorage') || item.src.includes('supabase.co/storage'))) {
+        // Se for um arquivo do Firebase Storage, marcar para deletar
+        if (item && item.src && item.src.includes('firebasestorage')) {
             setItemsToDelete(prev => [...prev, item]);
         }
         setPlaylist(playlist.filter(item => item.id !== id));
@@ -221,9 +230,10 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const handleImportFromMain = async () => {
         if (!window.confirm("Isso substituirá a playlist atual pela da TV Principal. Continuar?")) return;
         try {
-            const data = await backend.db.getDoc('tv_config', 'playlist');
-            if (data && data.items) {
-                setPlaylist(data.items);
+            const mainRef = doc(db, 'artifacts', appId, 'public', 'data', 'tv_config', 'playlist');
+            const snap = await getDoc(mainRef);
+            if (snap.exists()) {
+                setPlaylist(snap.data().items);
             } else {
                 alert("TV Principal não tem playlist salva.");
             }
@@ -233,15 +243,13 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const handleSaveAll = async () => {
         setIsSaving(true);
         try {
-            // Verifica usuário no `user` prop ou no backend.auth
-            const currentUser = user || backend.auth.currentUser();
-
-            if (currentUser) {
+            if (user && db) {
                 // 1. Deletar arquivos marcados do Storage
                 if (itemsToDelete.length > 0) {
                     await Promise.all(itemsToDelete.map(async (item) => {
                         try {
-                            await backend.storage.deleteFile(item.src);
+                            const fileRef = ref(storage, item.src);
+                            await deleteObject(fileRef);
                         } catch (err) {
                             console.warn("Erro ao deletar do storage (pode já não existir):", err);
                         }
@@ -250,9 +258,9 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                 }
 
                 // 2. Salvar Firestore na coleção correta
-                await backend.db.setDoc(collectionId, 'playlist', { items: playlist });
-                await backend.db.setDoc(collectionId, 'news', { items: news });
-                await backend.db.setDoc(collectionId, 'settings', editSettings);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'playlist'), { items: playlist });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'news'), { items: news });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', collectionId, 'settings'), editSettings);
                 alert("Salvo com sucesso!");
             } else {
                 localStorage.setItem('gmad_playlist', JSON.stringify(playlist));

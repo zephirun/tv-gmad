@@ -18,3 +18,7 @@ export const getWeatherDescription = (code) => {
     if (code >= 51) return { label: 'Chuva', icon: <CloudRain className="w-16 h-16 text-blue-500" /> };
     return { label: 'Nublado', icon: <Cloud className="w-16 h-16 text-gray-400" /> };
 };
+
+export const ROUTE_SECURITY = {
+    'madville': import.meta.env.VITE_PIN_MADVILLE || '0000'
+};

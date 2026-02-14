@@ -11,10 +11,13 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.18",
     "core-js": "^3.48.0",
     "firebase": "^12.8.0",
+    "intersection-observer": "^0.12.2",
     "lucide-react": "^0.563.0",
+    "proxy-polyfill": "^0.3.2",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
