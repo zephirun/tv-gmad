@@ -141,9 +141,9 @@ export default function LockScreen({ path, pin, onUnlock }) {
 
     const submitButtonStyle = {
         ...buttonStyle,
-        background: '#10b981', // Emerald-500
+        background: '#f97316',
         border: 'none',
-        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
+        boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)'
     };
 
     return (
@@ -153,7 +153,7 @@ export default function LockScreen({ path, pin, onUnlock }) {
                     {input === pin ? (
                         <Unlock size={40} color="#22c55e" />
                     ) : (
-                        <Lock size={40} color={error ? "#ef4444" : "#10b981"} />
+                        <Lock size={40} color={error ? "#ef4444" : "#f97316"} />
                     )}
                 </div>
 

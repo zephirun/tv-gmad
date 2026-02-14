@@ -54,15 +54,7 @@ const Clock = () => {
 export default function Sidebar({ weather, setIsAdminOpen, settings }) {
     const [instaIndex, setInstaIndex] = useState(0);
 
-    const instagramProfiles = [];
-    if (settings) {
-        if (settings.instagramUser) instagramProfiles.push({ user: settings.instagramUser, url: settings.instagramUrl });
-        if (settings.instagramUser2) instagramProfiles.push({ user: settings.instagramUser2, url: settings.instagramUrl2 });
-    }
-    // Fallback default
-    if (instagramProfiles.length === 0) {
-        instagramProfiles.push({ user: '@gmadmadville', url: 'https://instagram.com/gmadmadville' });
-    }
+    const instagramProfiles = [{ user: '@grupogmad', url: 'https://instagram.com/grupogmad' }];
 
     // Simplificação Radical: Apenas mostra o primeiro perfil, sem rotação
     const currentInsta = instagramProfiles[0];

@@ -1,0 +1,259 @@
+[
+  {
+    "collection_id": "tv_config",
+    "playlist": [
+      {
+        "id": 1,
+        "src": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920",
+        "type": "image",
+        "title": "MDF e Ferragens",
+        "duration": 8000,
+        "subtitle": "A maior variedade da região"
+      },
+      {
+        "id": 1769557365287,
+        "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769557355757_Corredi_a_Telesc_pica___Linha_Exclusiva_GMAD.mp4?alt=media&token=aadda6e0-3279-48e0-b1c9-9438fa0b7dd3",
+        "type": "video",
+        "title": "Corrediça Telescópica GMAD",
+        "duration": 8000,
+        "subtitle": ""
+      },
+      {
+        "id": 1769557386531,
+        "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769557378635_CORREDI_A_INVISA_H_fele.mp4?alt=media&token=eac992e5-dded-4d39-a0a9-6d49a42f465c",
+        "type": "video",
+        "title": "Corrediça INVISA HAFELE",
+        "duration": 8000,
+        "subtitle": ""
+      },
+      {
+        "id": 1769601862579,
+        "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771035907180_1769601850985_Puxadores_Avulsos___Mais_estilo_no_detalhe__mais_liberdade_no_projeto..mp4",
+        "type": "video",
+        "title": "Puxadores Avulsos",
+        "duration": 8000,
+        "subtitle": ""
+      },
+      {
+        "id": 1769601889361,
+        "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771035912281_1769601867198_GMAD_Boas_Escolhas.mp4",
+        "type": "video",
+        "title": "GMAD Boas Escolhas",
+        "duration": 8000,
+        "subtitle": ""
+      },
+      {
+        "id": 1769602796105,
+        "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769601907985_PROJETOS_SOLUCOES.mp4?alt=media&token=2161202e-32de-4238-b002-d2dabd7b7733",
+        "type": "video",
+        "title": "Projetos Soluções",
+        "duration": 8000,
+        "subtitle": ""
+      }
+    ],
+    "news": [
+      "Bem-vindo à GMAD",
+      "Horário de Atendimento: Seg-Sex 8:00 às 12:00 - 13:30 às 18:00 | Sáb 8:00 às 12:00",
+      "Siga o @grupogmad no Instagram"
+    ],
+    "settings": {
+      "wifiSsid": "GMAD",
+      "weatherCity": "Ponta Grossa",
+      "instagramUrl": "https://instagram.com/grupogmad",
+      "instagramUrl2": "",
+      "instagramUser": "@grupogmad",
+      "instagramUser2": ""
+    },
+    "updated_at": "2026-02-14T01:41:00.885383+00:00"
+  },
+  {
+    "collection_id": "tv_config_madville",
+    "playlist": {
+      "items": [
+        {
+          "id": 1769732233971,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036184601_1769732219892_Tudo_para_a_sua_casa__6_.mp4",
+          "type": "video",
+          "title": "Tudo para sua casa",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769683637638,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036189223_1769683621912_FOLDER_GRANDE.png",
+          "type": "image",
+          "title": "Promoção 21 ANOS, UMA RAZÃO PARA CELEBRAR!",
+          "duration": 50000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769692499718,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036197763_1769692482718_videoTela_madville.mp4",
+          "type": "video",
+          "title": "Madville",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769601889361,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036203518_1769601867198_GMAD_Boas_Escolhas.mp4",
+          "type": "video",
+          "title": "GMAD Boas Escolhas",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769601862579,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036209338_1769601850985_Puxadores_Avulsos___Mais_estilo_no_detalhe__mais_liberdade_no_projeto..mp4",
+          "type": "video",
+          "title": "Puxadores Avulsos",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769683442381,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036212486_1769683417299_Perfis_de_marceneiros__1080p_24fps_H264_128kbit_AAC_portugu_s_.mp4",
+          "type": "video",
+          "title": "Perfis de Marceneiros",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769683487331,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036218449_1769683465040_L_men___Conceito__1080p_30fps_H264_128kbit_AAC_.mp4",
+          "type": "video",
+          "title": "Lumen - Conceito",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769862501985,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036235755_1769862476620_Blum_Corporativo_versao_curta.mp4",
+          "type": "video",
+          "title": "Blum Corporativo",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769692901882,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036244008_1769692892225_Zen_Design.mp4",
+          "type": "video",
+          "title": "Zen Design",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769692927748,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036247339_1769692911851_SOMOS_H_fele.mp4",
+          "type": "video",
+          "title": "Hafele",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769692965809,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036251557_1769692949532_Sayerlack___50_Anos.mp4",
+          "type": "video",
+          "title": "Sayerlack",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769693060704,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771036257968_1769693053276_Solu__es_a_Bateria_para_Marcenaria___Makita.mp4",
+          "type": "video",
+          "title": "Makita",
+          "duration": 8000,
+          "subtitle": ""
+        }
+      ]
+    },
+    "news": {
+      "items": [
+        "Bem-vindo à GMAD Madville",
+        "Horário de Atendimento: Seg-Sex 8:00 às 12:00 - 13:30 às 18:00 | Sáb 8:00 às 12:00",
+        "Siga @gmadmadville e @madville_solucoes no Instagram",
+        "Promoção 21 Anos: Encerrada! Aguarde a apuração do Sorteio no dia 19!"
+      ]
+    },
+    "settings": {
+      "adminPass": "m@dvi!!3",
+      "instagramUrl": "https://instagram.com/gmadmadville",
+      "instagramUrl2": "https://instagram.com/madville_solucoes",
+      "instagramUser": "@gmadmadville",
+      "instagramUser2": "@madville_solucoes"
+    },
+    "updated_at": "2026-02-14T02:16:23.511521+00:00"
+  },
+  {
+    "collection_id": "tv_config_MADVILLE",
+    "playlist": {
+      "items": [
+        {
+          "id": 1,
+          "src": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920",
+          "type": "image",
+          "title": "MDF e Ferragens",
+          "duration": 8000,
+          "subtitle": "A maior variedade da região"
+        },
+        {
+          "id": 1769557365287,
+          "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769557355757_Corredi_a_Telesc_pica___Linha_Exclusiva_GMAD.mp4?alt=media&token=aadda6e0-3279-48e0-b1c9-9438fa0b7dd3",
+          "type": "video",
+          "title": "Corrediça Telescópica GMAD",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769557386531,
+          "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769557378635_CORREDI_A_INVISA_H_fele.mp4?alt=media&token=eac992e5-dded-4d39-a0a9-6d49a42f465c",
+          "type": "video",
+          "title": "Corrediça INVISA HAFELE",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769601862579,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771035907180_1769601850985_Puxadores_Avulsos___Mais_estilo_no_detalhe__mais_liberdade_no_projeto..mp4",
+          "type": "video",
+          "title": "Puxadores Avulsos",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769601889361,
+          "src": "https://zrrszkctndyyycjzhydp.supabase.co/storage/v1/object/public/media/1771035912281_1769601867198_GMAD_Boas_Escolhas.mp4",
+          "type": "video",
+          "title": "GMAD Boas Escolhas",
+          "duration": 8000,
+          "subtitle": ""
+        },
+        {
+          "id": 1769602796105,
+          "src": "https://firebasestorage.googleapis.com/v0/b/gmad-tv-corporativa.firebasestorage.app/o/artifacts%2Fdefault-app-id%2Fpublic%2F1769601907985_PROJETOS_SOLUCOES.mp4?alt=media&token=2161202e-32de-4238-b002-d2dabd7b7733",
+          "type": "video",
+          "title": "Projetos Soluções",
+          "duration": 8000,
+          "subtitle": ""
+        }
+      ]
+    },
+    "news": {
+      "items": [
+        "Bem-vindo à GMAD",
+        "Horário de Atendimento: Seg-Sex 8:00 às 12:00 - 13:30 às 18:00 | Sáb 8:00 às 12:00",
+        "Siga o @grupogmad no Instagram"
+      ]
+    },
+    "settings": {
+      "wifiSsid": "GMAD",
+      "weatherCity": "Ponta Grossa",
+      "instagramUrl": "https://instagram.com/grupogmad",
+      "instagramUrl2": "",
+      "instagramUser": "@grupogmad",
+      "instagramUser2": ""
+    },
+    "updated_at": "2026-02-14T03:42:20.524163+00:00"
+  }
+]

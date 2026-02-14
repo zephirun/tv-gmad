@@ -144,7 +144,7 @@ export default function App() {
   }, [settings?.weatherCity]);
 
   // Suporte a múltiplas TVs baseado na URL (ex: /madville)
-  const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '');
+  const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
   const collectionId = pathSegment ? `tv_config_${pathSegment}` : 'tv_config';
 
   useEffect(() => {

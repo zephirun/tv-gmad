@@ -34,11 +34,12 @@ import {
 } from 'firebase/storage';
 
 import { supabase } from '../supabase/client';
+export { supabase };
 
 // ==========================================
 // CONFIGURATION
 // ==========================================
-const PROVIDER = 'SUPABASE'; // 'FIREBASE' | 'SUPABASE'
+export const PROVIDER = 'SUPABASE'; // 'FIREBASE' | 'SUPABASE'
 
 export const backend = {
     // Auth
@@ -66,6 +67,10 @@ export const backend = {
                 if (!email.includes('@')) {
                     finalEmail = `${email}@gmad.com`;
                 }
+                if (!supabase) {
+                    console.error("Supabase not initialized. Login failed.");
+                    throw new Error("Sistema indisponível (Erro de Configuração)");
+                }
                 const { data, error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
                 if (error) throw error;
                 return data.user;
@@ -79,6 +84,7 @@ export const backend = {
                 // enviamos um usuário mock imediatamente para destravar o App.jsx
                 setTimeout(() => callback({ isAnonymous: true, uid: 'anon' }), 0);
 
+                if (!supabase) return () => { };
                 const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                     if (session?.user) callback(session.user);
                 });
@@ -87,7 +93,10 @@ export const backend = {
         },
         signOut: async () => {
             if (PROVIDER === 'FIREBASE') return signOut(fbAuth);
-            if (PROVIDER === 'SUPABASE') return supabase.auth.signOut();
+            if (PROVIDER === 'SUPABASE') {
+                if (!supabase) return;
+                return supabase.auth.signOut();
+            }
         },
         currentUser: () => {
             if (PROVIDER === 'FIREBASE') return fbAuth?.currentUser;
@@ -106,8 +115,13 @@ export const backend = {
                 });
             }
             if (PROVIDER === 'SUPABASE') {
+                if (!supabase) {
+                    console.error("Supabase not initialized.");
+                    callback(null);
+                    return () => { };
+                }
                 // Initial Fetch
-                supabase.from('tv_collections').select(docId).eq('collection_id', collection).single()
+                supabase.from('tv_collections').select(docId).eq('collection_id', collection).maybeSingle()
                     .then(({ data, error }) => {
                         if (error) {
                             console.error(`[SUPABASE] Fetch error for ${collection}/${docId}:`, error.message);
@@ -144,7 +158,8 @@ export const backend = {
                 return snap.exists() ? snap.data() : null;
             }
             if (PROVIDER === 'SUPABASE') {
-                const { data, error } = await supabase.from('tv_collections').select(docId).eq('collection_id', collection).single();
+                if (!supabase) return null;
+                const { data, error } = await supabase.from('tv_collections').select(docId).eq('collection_id', collection).maybeSingle();
                 if (error) {
                     console.error(`[SUPABASE] getDoc error:`, error.message);
                     return null;
@@ -160,29 +175,16 @@ export const backend = {
                 return setDoc(docRef, data);
             }
             if (PROVIDER === 'SUPABASE') {
-                // Upsert. We need to preserve other columns.
-                // Supabase upsert requires PK.
-                // We construct the update object dynamically: { collection_id: collection, [docId]: data }
-
+                if (!supabase) throw new Error("Supabase não configurado.");
                 const updateData = { collection_id: collection };
                 updateData[docId] = data;
 
-                // We use upsert. Note: this might overwrite other fields if not careful? 
-                // No, upsert merges rows if we provide all, but here we might only provide one column.
-                // Actually to update ONE column without touching others in SQL: UPDATE ... SET col = val.
-                // Supabase .upsert() replaces the row if we don't specify onConflict behavior or if we don't provide all data?
-                // Better strategy: Check if exists, then Update. Or Upsert with all defaults?
-                // 'tv_collections' has defaults.
-                // Let's use upsert with explicit merge if possible, or just standard fetching?
-                // Actually, standard UPDATE works if row exists. INSERT if not.
+                const { error } = await supabase
+                    .from('tv_collections')
+                    .upsert(updateData, { onConflict: 'collection_id' });
 
-                const { count } = await supabase.from('tv_collections').select('*', { count: 'exact', head: true }).eq('collection_id', collection);
-
-                if (count > 0) {
-                    return supabase.from('tv_collections').update(updateData).eq('collection_id', collection);
-                } else {
-                    return supabase.from('tv_collections').insert(updateData);
-                }
+                if (error) throw error;
+                return { data: updateData };
             }
         }
     },
@@ -197,6 +199,7 @@ export const backend = {
                 return getDownloadURL(snapshot.ref);
             }
             if (PROVIDER === 'SUPABASE') {
+                if (!supabase) throw new Error("Supabase não configurado.");
                 const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 const { data, error } = await supabase.storage.from('media').upload(safeName, file);
                 if (error) throw error;
@@ -211,6 +214,7 @@ export const backend = {
                 return deleteObject(fileRef);
             }
             if (PROVIDER === 'SUPABASE') {
+                if (!supabase) return { error: "Supabase não configurado." };
                 // Extract filename regardless of query params
                 const match = url.match(/\/media\/([^?#]+)/);
                 const path = match ? match[1] : null;
