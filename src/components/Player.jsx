@@ -1,100 +1,157 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Player({ currentItem, playlist, currentIndex, next }) {
     const [isLoading, setIsLoading] = useState(true);
     const [retryCount, setRetryCount] = useState(0);
+    const ytPlayerRef = useRef(null);
+    const containerRef = useRef(null);
 
-    // Reset de segurança se o vídeo travar no loading por muito tempo
+    // Efeito para carregar o próximo item
     useEffect(() => {
-        if (currentItem?.type !== 'video' || !isLoading) return;
+        if (!currentItem) return;
 
+        // Se for imagem, define um timer para trocar
+        if (currentItem.type === 'image') {
+            const timer = setTimeout(() => {
+                next();
+            }, currentItem.duration || 10000);
+            return () => clearTimeout(timer);
+        }
+
+        // Se for YouTube, carregar a API se não existir
+        if (currentItem.type === 'youtube') {
+            if (!window.YT) {
+                const tag = document.createElement('script');
+                tag.src = "https://www.youtube.com/iframe_api";
+                const firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                window.onYouTubeIframeAPIReady = () => {
+                    initYouTubePlayer();
+                };
+            } else {
+                initYouTubePlayer();
+            }
+        }
+    }, [currentItem, next]);
+
+    const initYouTubePlayer = () => {
+        if (ytPlayerRef.current) {
+            ytPlayerRef.current.destroy();
+            ytPlayerRef.current = null;
+        }
+
+        const videoId = currentItem.src;
+        ytPlayerRef.current = new window.YT.Player(`yt-player-${videoId}`, {
+            videoId: videoId,
+            playerVars: {
+                autoplay: 1,
+                controls: 0,
+                mute: 1,
+                modestbranding: 1,
+                rel: 0,
+                showinfo: 0,
+                iv_load_policy: 3,
+                playsinline: 1
+            },
+            events: {
+                onReady: (event) => {
+                    event.target.playVideo();
+                    setIsLoading(false);
+                },
+                onStateChange: (event) => {
+                    // event.data === 0 significa que o vídeo acabou
+                    if (event.data === window.YT.PlayerState.ENDED) {
+                        next();
+                    }
+                },
+                onError: () => next()
+            }
+        });
+    };
+
+    // Anti-travamento de carregamento (WebOS)
+    useEffect(() => {
         const timer = setTimeout(() => {
-            console.warn("[PLAYER] Timeout de carregamento (20s). Pulando para o próximo.");
-            next();
+            if (isLoading && currentItem?.type !== 'image') {
+                console.warn("[PLAYER] Mídia demorou demais para carregar. Pulando...");
+                next();
+            }
         }, 20000);
-
         return () => clearTimeout(timer);
     }, [currentItem, isLoading, next]);
 
     if (!currentItem) return <div style={{ width: '100%', height: '100%', background: 'black' }} />;
 
-    const isVideo = currentItem.type === 'video';
-
     return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', background: 'black', overflow: 'hidden' }}>
+        <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: 'black', overflow: 'hidden' }}>
 
-            {/* OVERLAY DE CARREGAMENTO */}
             {isLoading && (
                 <div style={{
                     position: 'absolute', inset: 0, zIndex: 50,
                     background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                    <div className="spinner" style={{
-                        width: '50px', height: '50px', border: '4px solid #333',
-                        borderTopColor: '#E35205', borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                    }}></div>
+                    <div className="spinner" style={{ animation: 'spin 1s linear infinite' }}></div>
                 </div>
             )}
 
-            {/* SLIDE: IMAGEM */}
-            {!isVideo && (
+            {currentItem.type === 'image' && (
                 <img
                     key={currentItem.src}
                     src={currentItem.src}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onLoad={() => setIsLoading(false)}
                     onError={() => next()}
-                    alt="Slide"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
             )}
 
-            {/* SLIDE: VÍDEO */}
-            {/* O uso de 'key={currentItem.src}' força o React a destruir e recriar o elemento <video>, 
-                o que é a forma mais segura de resetar o decodificador de hardware da TV WebOS. */}
-            {isVideo && (
+            {currentItem.type === 'video' && (
                 <video
                     key={currentItem.src}
                     src={currentItem.src}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     autoPlay
                     muted
                     playsInline
-                    loop={playlist.length === 1}
-                    crossOrigin="anonymous"
                     preload="auto"
                     onPlaying={() => {
-                        console.log("[PLAYER] Reproduzindo:", currentItem.title);
                         setIsLoading(false);
+                        setRetryCount(0);
                     }}
-                    onEnded={() => {
-                        console.log("[PLAYER] Vídeo finalizado.");
-                        next();
-                    }}
-                    onError={(e) => {
-                        console.error("[PLAYER] Erro de vídeo detectado.");
+                    onEnded={() => next()}
+                    onError={() => {
                         if (retryCount < 1) {
                             setRetryCount(prev => prev + 1);
-                            e.target.load();
                         } else {
                             next();
                         }
                     }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
             )}
 
-            {/* INDICADORES DE PROGRESSO */}
+            {currentItem.type === 'youtube' && (
+                <div
+                    key={currentItem.src}
+                    id={`yt-player-${currentItem.src}`}
+                    style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+                />
+            )}
+
             <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '8px', zIndex: 60 }}>
                 {playlist.map((_, i) => (
                     <div key={i} style={{
-                        height: '8px', borderRadius: '4px', transition: 'all 0.5s ease',
-                        width: i === currentIndex ? '40px' : '12px',
-                        background: i === currentIndex ? '#E35205' : 'rgba(255,255,255,0.3)',
+                        height: '6px', width: i === currentIndex ? '30px' : '10px',
+                        borderRadius: '3px', background: i === currentIndex ? '#E35205' : 'rgba(255,255,255,0.2)',
+                        transition: 'all 0.5s ease'
                     }} />
                 ))}
             </div>
 
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #E35205; border-radius: 50%; }
+                iframe { width: 100%; height: 100%; border: none; pointer-events: none; transform: scale(1.1); }
+            `}</style>
         </div>
     );
 }

@@ -19,7 +19,7 @@
         {
           "id": "f-2",
           "type": "image",
-          "src": "/madville/promo_21_anos.png",
+          "src": "/madville/promo_21_anos.jpg",
           "title": "Promoção 21 Anos",
           "duration": 15000
         },
@@ -84,6 +84,13 @@
           "type": "video",
           "src": "/madville/makita.mp4",
           "title": "Makita",
+          "duration": null
+        },
+        {
+          "id": "yt-1",
+          "type": "youtube",
+          "src": "YmJzfFOYAnw",
+          "title": "YouTube Shorts",
           "duration": null
         }
       ]

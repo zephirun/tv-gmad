@@ -78,23 +78,66 @@ export const backend = {
             return null;
         },
 
-        // SALVAMENTO LOCAL REAL
+        // SALVAMENTO HÍBRIDO (LOCAL + GITHUB PARA VERCEL)
         setDoc: async (collection, docId, data) => {
+            const isVercel = window.location.hostname.includes('vercel.app');
+
+            if (isVercel) {
+                console.log("[BACKEND] Salvando via GitHub API...");
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token');
+                const REPO = 'zephirun/tv-corporativa-gmad';
+                const FILE_PATH = 'src/data/local_cities.json';
+
+                if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
+
+                // 1. Pegar todos os dados atuais (preservar outras cidades)
+                const currentRes = await fetch('/api/get-local-data');
+                const allData = await currentRes.json();
+
+                // 2. Atualizar localmente no objeto
+                if (!allData[collection]) allData[collection] = {};
+                if (!allData[collection][docId]) allData[collection][docId] = {};
+
+                // Mesclar dados
+                if (typeof data === 'object' && !Array.isArray(data)) {
+                    allData[collection][docId] = { ...allData[collection][docId], ...data };
+                } else {
+                    allData[collection][docId] = data;
+                }
+
+                // 3. Pegar o SHA do arquivo no GitHub para poder atualizar
+                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+                });
+                const fileData = await getFileRes.json();
+
+                if (!getFileRes.ok) throw new Error("Erro ao buscar SHA do arquivo no GitHub");
+
+                // 4. Enviar atualização
+                const updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update ${collection} ${docId} via Admin Panel`,
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
+                        sha: fileData.sha
+                    })
+                });
+
+                if (!updateRes.ok) throw new Error("Erro ao salvar no GitHub. Verifique o Token.");
+                return { success: true };
+            }
+
             if (PROVIDER === 'LOCAL') {
-                // 'collection' aqui é a cityKey
-                // Primeiro precisamos pegar o estado atual da cidade no JSON
-                // Mas o AdminPanel envia uma parte (ex: playlist).
-                // Nossa API local agora vai receber a cityKey e o dado específico.
-
-                // Vamos simplificar: O AdminPanel envia backend.db.setDoc(collectionId, 'items', newItems)
-                // Vamos mapear isso para a estrutura do JSON.
-
                 const response = await fetch('/api/save-city-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         cityKey: collection,
-                        data: { [docId]: data } // Isso vai mesclar no JSON no lado do servidor
+                        data: { [docId]: data }
                     })
                 });
 

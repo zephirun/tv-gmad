@@ -23,6 +23,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('playlist');
     const [itemsToDelete, setItemsToDelete] = useState([]);
+    const [githubToken, setGithubToken] = useState(localStorage.getItem('gmad_github_token') || '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');
 
     // Force basic styles reset and fetch credentials
     useEffect(() => {
@@ -317,11 +318,33 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const handleAddItem = (e) => {
         e.preventDefault();
         setErrorMsg('');
+
         if (newItem.type !== 'news_joinville' && (!newItem.src.trim() || !newItem.title.trim())) {
             setErrorMsg('Preencha título e mídia!');
             return;
         }
-        const item = { ...newItem, src: newItem.type === 'news_joinville' ? '' : newItem.src, title: newItem.type === 'news_joinville' ? 'Feed de Notícias' : newItem.title, id: Date.now() };
+
+        let finalSrc = newItem.src;
+
+        // Extração de ID do YouTube se for o caso
+        if (newItem.type === 'youtube') {
+            const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+            const match = newItem.src.match(ytRegex);
+            if (match && match[1]) {
+                finalSrc = match[1];
+            } else if (newItem.src.length !== 11) {
+                setErrorMsg('Link do YouTube inválido!');
+                return;
+            }
+        }
+
+        const item = {
+            ...newItem,
+            src: newItem.type === 'news_joinville' ? '' : finalSrc,
+            title: newItem.type === 'news_joinville' ? 'Feed de Notícias' : newItem.title,
+            id: Date.now()
+        };
+
         setPlaylist([...playlist, item]);
         setNewItem({ type: 'image', src: '', title: '', subtitle: '', duration: 8000 });
     };
@@ -544,7 +567,8 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                 <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Tipo de Mídia</label>
                                                 <select style={s.input} value={newItem.type} onChange={e => setNewItem({ ...newItem, type: e.target.value, src: '' })}>
                                                     <option value="image">Imagem Estática</option>
-                                                    <option value="video">Vídeo Animado</option>
+                                                    <option value="video">Vídeo Local (MP4)</option>
+                                                    <option value="youtube">Vídeo do YouTube</option>
                                                 </select>
                                             </div>
                                             <div>
@@ -564,37 +588,54 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
 
                                         <div style={{
                                             border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '16px',
-                                            padding: '40px', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.01)',
+                                            padding: newItem.type === 'youtube' ? '24px' : '40px',
+                                            marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.01)',
                                             textAlign: 'center', transition: 'all 0.2s ease',
-                                            cursor: 'pointer'
+                                            cursor: newItem.type === 'youtube' ? 'default' : 'pointer'
                                         }}
-                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.3)'}
-                                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                            onMouseEnter={e => newItem.type !== 'youtube' && (e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.3)')}
+                                            onMouseLeave={e => newItem.type !== 'youtube' && (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
                                         >
-                                            {!newItem.src && !isUploading ? (
-                                                <label style={{ cursor: 'pointer', display: 'block' }}>
-                                                    <div style={{ marginBottom: '16px', color: '#f97316', display: 'flex', justifyContent: 'center' }}>
-                                                        <FileImage size={48} strokeWidth={1.5} />
-                                                    </div>
-                                                    <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '15px' }}>Clique ou arraste para enviar</div>
-                                                    <div style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}>Suporta JPG, PNG e MP4</div>
-                                                    <input type="file" style={{ display: 'none' }} accept={newItem.type === 'image' ? "image/*" : "video/*"} onChange={handleFileUpload} />
-                                                </label>
-                                            ) : isUploading ? (
-                                                <div>
-                                                    <Loader2 className="animate-spin" size={40} style={{ margin: '0 auto 16px', color: '#f97316' }} />
-                                                    <span style={{ color: '#0f172a', fontWeight: '600' }}>Processando arquivo...</span>
+                                            {newItem.type === 'youtube' ? (
+                                                <div style={{ textAlign: 'left' }}>
+                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Link do Vídeo (Compilado ou Shorts)</label>
+                                                    <input
+                                                        type="text"
+                                                        style={s.input}
+                                                        placeholder="Cole o link do YouTube aqui..."
+                                                        value={newItem.src}
+                                                        onChange={e => setNewItem({ ...newItem, src: e.target.value })}
+                                                    />
+                                                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/...</p>
                                                 </div>
                                             ) : (
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
-                                                    <div style={{ width: '80px', height: '50px', borderRadius: '8px', overflow: 'hidden', border: '2px solid #f97316' }}>
-                                                        {newItem.type === 'image' ? <img src={newItem.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ backgroundColor: '#020617', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FileVideo size={20} color="#f97316" /></div>}
-                                                    </div>
-                                                    <div style={{ textAlign: 'left' }}>
-                                                        <div style={{ fontWeight: '700', color: '#f97316' }}>Upload Concluído!</div>
-                                                        <button type="button" onClick={() => setNewItem({ ...newItem, src: '' })} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', padding: 0, marginTop: '4px' }}>Substituir Arquivo</button>
-                                                    </div>
-                                                </div>
+                                                <>
+                                                    {!newItem.src && !isUploading ? (
+                                                        <label style={{ cursor: 'pointer', display: 'block' }}>
+                                                            <div style={{ marginBottom: '16px', color: '#f97316', display: 'flex', justifyContent: 'center' }}>
+                                                                <FileImage size={48} strokeWidth={1.5} />
+                                                            </div>
+                                                            <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '15px' }}>Clique ou arraste para enviar</div>
+                                                            <div style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}>Suporta JPG, PNG e MP4</div>
+                                                            <input type="file" style={{ display: 'none' }} accept={newItem.type === 'image' ? "image/*" : "video/*"} onChange={handleFileUpload} />
+                                                        </label>
+                                                    ) : isUploading ? (
+                                                        <div>
+                                                            <Loader2 className="animate-spin" size={40} style={{ margin: '0 auto 16px', color: '#f97316' }} />
+                                                            <span style={{ color: '#0f172a', fontWeight: '600' }}>Processando arquivo...</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+                                                            <div style={{ width: '80px', height: '50px', borderRadius: '8px', overflow: 'hidden', border: '2px solid #f97316' }}>
+                                                                {newItem.type === 'image' ? <img src={newItem.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ backgroundColor: '#020617', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FileVideo size={20} color="#f97316" /></div>}
+                                                            </div>
+                                                            <div style={{ textAlign: 'left' }}>
+                                                                <div style={{ fontWeight: '700', color: '#f97316' }}>Upload Concluído!</div>
+                                                                <button type="button" onClick={() => setNewItem({ ...newItem, src: '' })} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', padding: 0, marginTop: '4px' }}>Substituir Arquivo</button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
 
@@ -659,6 +700,14 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                         </div>
                                                     </div>
                                                 )}
+                                                {item.type === 'youtube' && (
+                                                    <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <img src={`https://img.youtube.com/vi/${item.src}/mqdefault.jpg`} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+                                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <PlayCircle size={24} color="white" />
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 {item.type === 'news_joinville' && <Newspaper size={28} color="#f97316" />}
                                             </div>
 
@@ -671,7 +720,12 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                         backgroundColor: item.type === 'video' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(249, 115, 22, 0.1)',
                                                         padding: '2px 6px', borderRadius: '4px'
                                                     }}>
-                                                        {item.type === 'video' ? 'Vídeo' : 'Imagem'}
+                                                        {{
+                                                            'video': 'Vídeo Local',
+                                                            'youtube': 'YouTube',
+                                                            'image': 'Imagem',
+                                                            'news_joinville': 'Feed'
+                                                        }[item.type] || 'Mídia'}
                                                     </span>
                                                     {item.subtitle && <span style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>• {item.subtitle}</span>}
                                                 </div>
@@ -830,6 +884,24 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Nova Senha</label>
                                             <input type="password" style={s.input} value={editSettings.adminPass || ''} onChange={e => setEditSettings({ ...editSettings, adminPass: e.target.value })} placeholder="••••••••" />
                                             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>Deixe em branco para manter a senha atual.</div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginTop: '24px' }}>
+                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>GitHub Personal Access Token (PAT)</label>
+                                        <input
+                                            type="password"
+                                            style={s.input}
+                                            value={githubToken}
+                                            onChange={e => {
+                                                setGithubToken(e.target.value);
+                                                localStorage.setItem('gmad_github_token', e.target.value);
+                                            }}
+                                            placeholder="ghp_..."
+                                        />
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                                            Necessário para salvar alterações quando estiver na Vercel.
+                                            O token é salvo apenas neste navegador.
                                         </div>
                                     </div>
                                     <div style={{ marginTop: '24px', padding: '16px', backgroundColor: 'rgba(251, 191, 36, 0.05)', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
