@@ -90,9 +90,18 @@ export const backend = {
 
                 if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
 
-                // 1. Pegar todos os dados atuais (preservar outras cidades)
-                const currentRes = await fetch('/api/get-local-data');
-                const allData = await currentRes.json();
+                // 1. Pegar o arquivo atual do GitHub (para ter o SHA e o conteúdo)
+                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+                });
+
+                if (!getFileRes.ok) throw new Error("Erro ao buscar dados no GitHub. Verifique o Token e o Repositório.");
+
+                const fileData = await getFileRes.json();
+
+                // Decodificar conteúdo (Base64 -> UTF-8 -> JSON)
+                const currentContent = decodeURIComponent(escape(atob(fileData.content)));
+                const allData = JSON.parse(currentContent);
 
                 // 2. Atualizar localmente no objeto
                 if (!allData[collection]) allData[collection] = {};
@@ -104,14 +113,6 @@ export const backend = {
                 } else {
                     allData[collection][docId] = data;
                 }
-
-                // 3. Pegar o SHA do arquivo no GitHub para poder atualizar
-                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-                });
-                const fileData = await getFileRes.json();
-
-                if (!getFileRes.ok) throw new Error("Erro ao buscar SHA do arquivo no GitHub");
 
                 // 4. Enviar atualização
                 const updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
