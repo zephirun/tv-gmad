@@ -85,7 +85,7 @@ export const backend = {
             if (isVercel) {
                 console.log("[BACKEND] Salvando via GitHub API...");
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token');
-                const REPO = 'zephirun/tv-corporativa-gmad';
+                const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
                 if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");

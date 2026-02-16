@@ -25,6 +25,11 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const [itemsToDelete, setItemsToDelete] = useState([]);
     const [githubToken, setGithubToken] = useState(localStorage.getItem('gmad_github_token') || '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');
 
+    // Sync token to localStorage
+    useEffect(() => {
+        if (githubToken) localStorage.setItem('gmad_github_token', githubToken);
+    }, [githubToken]);
+
     // Force basic styles reset and fetch credentials
     useEffect(() => {
         document.body.style.overflow = 'hidden';
