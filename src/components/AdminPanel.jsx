@@ -955,13 +955,32 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                                 <div style={{ display: 'grid', gap: '20px' }}>
                                     <div style={{ padding: '24px', backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Provedor Ativo</div>
+                                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Arquitetura do Sistema</div>
                                         <div style={{ fontSize: '20px', fontWeight: '800', color: '#f97316', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f97316' }}></div>
-                                            {PROVIDER}
+                                            Híbrida (Local + GitHub API)
                                         </div>
                                         <p style={{ fontSize: '13px', color: '#64748b', marginTop: '8px', lineHeight: '1.5' }}>
-                                            Este é o motor que gerencia seus dados. O sistema deve usar **SUPABASE** para garantir que as atualizações cheguem a todas as TVs.
+                                            As mídias pesadas (vídeos/imagens) são servidas localmente para evitar custos de tráfego.
+                                            As configurações e notícias são sincronizadas via **GitHub API** para garantir que funcionem na Vercel.
+                                        </p>
+                                    </div>
+
+                                    <div style={{ padding: '24px', backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}>
+                                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Status de Sincronização</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{
+                                                padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: '700',
+                                                backgroundColor: githubToken ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                color: githubToken ? '#10b981' : '#ef4444',
+                                                border: '1px solid ' + (githubToken ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)')
+                                            }}>
+                                                {githubToken ? 'GITHUB TOKEN CONFIGURADO' : 'TOKEN PENDENTE'}
+                                            </div>
+                                            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>• Repositório: zephirun/tv-gmad</span>
+                                        </div>
+                                        <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '12px' }}>
+                                            As alterações levam cerca de 2 minutos para serem compiladas pela Vercel após clicar em Publicar.
                                         </p>
                                     </div>
 
@@ -970,23 +989,6 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                         <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', fontFamily: 'monospace' }}>{collectionId}</div>
                                         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>
                                             Path detectado: <span style={{ fontFamily: 'monospace', fontWeight: '700' }}>{window.location.pathname}</span>
-                                        </div>
-                                        <p style={{ fontSize: '13px', color: '#64748b', marginTop: '8px', lineHeight: '1.5' }}>
-                                            Identificador único desta TV no banco de dados. Agora normalizado para letras minúsculas.
-                                        </p>
-                                    </div>
-
-                                    <div style={{ padding: '24px', backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Status do Cliente</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{
-                                                padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: '700',
-                                                backgroundColor: supabase ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                color: supabase ? '#10b981' : '#ef4444',
-                                                border: '1px solid ' + (supabase ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)')
-                                            }}>
-                                                {supabase ? 'CONECTADO' : 'ERRO DE CONEXÃO (CLIENTE NULL)'}
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
