@@ -157,6 +157,77 @@ export const backend = {
                 if (error) throw error;
                 return { success: true };
             }
+        },
+
+        setDocsBatch: async (collection, docsMap) => {
+            const isVercel = window.location.hostname.includes('vercel.app');
+
+            if (isVercel) {
+                console.log("[BACKEND] Salvando lote via GitHub API...");
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
+                const REPO = 'zephirun/tv-gmad';
+                const FILE_PATH = 'src/data/local_cities.json';
+
+                if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
+
+                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Cache-Control': 'no-cache' }
+                });
+
+                if (!getFileRes.ok) {
+                    const errorData = await getFileRes.json().catch(() => ({}));
+                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message}`);
+                }
+
+                const fileData = await getFileRes.json();
+                const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
+                const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
+
+                if (!allData[collection]) allData[collection] = {};
+
+                Object.entries(docsMap).forEach(([docId, data]) => {
+                    if (!allData[collection][docId]) allData[collection][docId] = {};
+                    if (typeof data === 'object' && !Array.isArray(data)) {
+                        allData[collection][docId] = { ...allData[collection][docId], ...data };
+                    } else {
+                        allData[collection][docId] = data;
+                    }
+                });
+
+                const updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `Update batch ${Object.keys(docsMap).join(', ')} via Admin Panel`,
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
+                        sha: fileData.sha
+                    })
+                });
+
+                if (!updateRes.ok) throw new Error("Erro ao salvar lote no GitHub.");
+                return { success: true };
+            }
+
+            if (PROVIDER === 'LOCAL') {
+                const response = await fetch('/api/save-city-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cityKey: collection,
+                        data: docsMap
+                    })
+                });
+                if (!response.ok) throw new Error("Erro ao salvar lote localmente");
+                return await response.json();
+            }
+
+            if (PROVIDER === 'SUPABASE') {
+                await Promise.all(Object.entries(docsMap).map(([docId, data]) => {
+                    const updateData = { collection_id: collection, [docId]: data };
+                    return supabase.from('tv_collections').upsert(updateData, { onConflict: 'collection_id' });
+                }));
+                return { success: true };
+            }
         }
     },
 

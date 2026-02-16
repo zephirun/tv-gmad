@@ -408,12 +408,14 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                     setItemsToDelete([]);
                 }
 
-                // 2. Salvar Firestore na coleção correta
-                await backend.db.setDoc(collectionId, 'playlist', { items: playlist });
-                await backend.db.setDoc(collectionId, 'news', { items: news });
-                await backend.db.setDoc(collectionId, 'settings', editSettings);
+                // 2. Salvar tudo em um único commit (Atomic Update)
+                await backend.db.setDocsBatch(collectionId, {
+                    playlist: { items: playlist },
+                    news: { items: news },
+                    settings: editSettings
+                });
 
-                alert("Playlist sincronizada com sucesso!");
+                alert("Tudo sincronizado com sucesso via GitHub!");
             } else {
                 localStorage.setItem('gmad_playlist', JSON.stringify(playlist));
                 localStorage.setItem('gmad_news', JSON.stringify(news));
@@ -753,19 +755,24 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                 </div>
                                             )}
 
-                                            <button
-                                                onClick={() => handleDeleteItem(item.id)}
-                                                style={{
-                                                    border: 'none', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
-                                                    width: '44px', height: '44px', borderRadius: '10px', cursor: 'pointer',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    transition: 'all 0.2s ease'
-                                                }}
-                                                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
-                                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
+                                            <div key={`del-${item.id}`}>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteItem(item.id);
+                                                    }}
+                                                    style={{
+                                                        border: 'none', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                                        width: '44px', height: '44px', borderRadius: '10px', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
