@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
+import localApiPlugin from './vite-local-api'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    localApiPlugin(),
     // Plugin para suporte a navegadores antigos (Smart TVs, etc)
     legacy({
       targets: ['> 0.5%', 'last 2 versions', 'Firefox ESR', 'not dead', 'chrome >= 30', 'android >= 4', 'safari >= 7', 'opera >= 20'],

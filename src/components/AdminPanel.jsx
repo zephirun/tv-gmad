@@ -290,7 +290,12 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         setErrorMsg('');
 
         try {
-            const downloadURL = await backend.storage.uploadFile(file);
+            let downloadURL = await backend.storage.uploadFile(file, collectionId);
+            // Cache Busting Seletivo: Adiciona versão apenas no upload
+            // Isso garante que a TV baixe o novo arquivo, mas mantenha o cache nos loops subsequentes
+            if (downloadURL && !downloadURL.includes('?v=')) {
+                downloadURL += `?v=${Date.now()}`;
+            }
             setNewItem(prev => ({ ...prev, src: downloadURL }));
             setIsUploading(false);
         } catch (error) {
@@ -835,6 +840,36 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div style={s.card}>
+                                    <div style={s.sectionTitle}>
+                                        <div style={{ padding: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '10px' }}>
+                                            <Loader2 size={20} />
+                                        </div>
+                                        <span>Atualização Remota</span>
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                                        Se as TVs não estiverem atualizando o conteúdo novo, use este botão para forçar o recarregamento em todos os aparelhos conectados.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditSettings({ ...editSettings, system_reload_timestamp: Date.now() })}
+                                        style={{
+                                            ...s.btnAction,
+                                            backgroundColor: '#3b82f6',
+                                            width: '100%',
+                                            justifyContent: 'center',
+                                            boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)'
+                                        }}
+                                    >
+                                        <Loader2 size={18} /> Forçar Atualização em Todas as TVs
+                                    </button>
+                                    {editSettings.system_reload_timestamp && (
+                                        <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '11px', color: '#94a3b8' }}>
+                                            Comando agendado para o próximo salvamento.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

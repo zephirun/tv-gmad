@@ -1,0 +1,137 @@
+{
+  "madville": {
+    "playlist": {
+      "items": [
+        {
+          "id": "f-1",
+          "type": "video",
+          "src": "/madville/tudo_para_casa.mp4",
+          "title": "Tudo para sua casa",
+          "duration": null
+        },
+        {
+          "id": "f-3",
+          "type": "video",
+          "src": "/madville/videotela_madville.mp4",
+          "title": "Madville",
+          "duration": null
+        },
+        {
+          "id": "f-2",
+          "type": "image",
+          "src": "/madville/promo_21_anos.png",
+          "title": "Promoção 21 Anos",
+          "duration": 15000
+        },
+        {
+          "id": "f-4",
+          "type": "video",
+          "src": "/madville/gmad_boas_escolhas.mp4",
+          "title": "GMAD Boas Escolhas",
+          "duration": null
+        },
+        {
+          "id": "f-5",
+          "type": "video",
+          "src": "/madville/puxadores_avulsos.mp4",
+          "title": "Puxadores Avulsos",
+          "duration": null
+        },
+        {
+          "id": "f-6",
+          "type": "video",
+          "src": "/madville/perfis_marceneiros.mp4",
+          "title": "Perfis de Marceneiros",
+          "duration": null
+        },
+        {
+          "id": "f-7",
+          "type": "video",
+          "src": "/madville/lumen_conceito.mp4",
+          "title": "Lumen - Conceito",
+          "duration": null
+        },
+        {
+          "id": "f-8",
+          "type": "video",
+          "src": "/madville/blum_corporativo.mp4",
+          "title": "Blum Corporativo",
+          "duration": null
+        },
+        {
+          "id": "f-9",
+          "type": "video",
+          "src": "/madville/zen_design.mp4",
+          "title": "Zen Design",
+          "duration": null
+        },
+        {
+          "id": "f-10",
+          "type": "video",
+          "src": "/madville/hafele.mp4",
+          "title": "Hafele",
+          "duration": null
+        },
+        {
+          "id": "f-11",
+          "type": "video",
+          "src": "/madville/sayerlack.mp4",
+          "title": "Sayerlack",
+          "duration": null
+        },
+        {
+          "id": "f-12",
+          "type": "video",
+          "src": "/madville/makita.mp4",
+          "title": "Makita",
+          "duration": null
+        }
+      ]
+    },
+    "news": {
+      "items": [
+        "Bem-vindo à GMAD Madville",
+        "Horário de Atendimento: Seg-Sex 8:00 às 12:00 - 13:30 às 18:00 | Sáb 8:00 às 12:00",
+        "Siga @gmadmadville e @madville_solucoes no Instagram",
+        "Promoção 21 Anos: ENCERRADA! Cadastre suas notas fiscais até dia 17/02 às 23:59"
+      ]
+    },
+    "settings": {
+      "weatherCity": "Joinville",
+      "instagramUrl": "https://instagram.com/gmadmadville",
+      "instagramUser": "@gmadmadville",
+      "instagramUrl2": "https://instagram.com/madville_solucoes",
+      "instagramUser2": "@madville_solucoes"
+    }
+  },
+  "default": {
+    "playlist": [
+      {
+        "id": 1,
+        "type": "image",
+        "src": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920",
+        "title": "MDF e Ferragens",
+        "subtitle": "A maior variedade da região",
+        "duration": 8000
+      },
+      {
+        "id": 3,
+        "type": "video",
+        "src": "/madville/gmad_boas_escolhas.mp4",
+        "title": "Soluções GMAD",
+        "subtitle": "Qualidade garantida em cada detalhe",
+        "duration": null
+      }
+    ],
+    "news": [
+      "GMAD - Tudo para o Marceneiro",
+      "Qualidade e Variedade em MDF e Ferragens",
+      "Confira nossas ofertas exclusivas na loja!"
+    ],
+    "settings": {
+      "weatherCity": "Joinville",
+      "instagramUrl": "https://instagram.com/gmad_online",
+      "instagramUser": "@gmad_online"
+    }
+  }
+}
