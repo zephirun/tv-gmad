@@ -84,7 +84,8 @@ export const backend = {
 
             if (isVercel) {
                 console.log("[BACKEND] Salvando via GitHub API...");
-                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token') || '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';
+                // Chave v3 - o usuário deve colar o novo token no painel admin
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
@@ -95,12 +96,16 @@ export const backend = {
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
                 });
 
-                if (!getFileRes.ok) throw new Error("Erro ao buscar dados no GitHub. Verifique o Token e o Repositório.");
+                if (!getFileRes.ok) {
+                    const errorData = await getFileRes.json().catch(() => ({}));
+                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message || 'Verifique o Token e o Repositório'}`);
+                }
 
                 const fileData = await getFileRes.json();
 
-                // Decodificar conteúdo (Base64 -> UTF-8 -> JSON)
-                const currentContent = decodeURIComponent(escape(atob(fileData.content)));
+                // Decodificar conteúdo (Base64 -> UTF-8 -> JSON) - Limpando quebras de linha que o GitHub envia
+                const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
+                const currentContent = decodeURIComponent(escape(atob(cleanBase64)));
                 const allData = JSON.parse(currentContent);
 
                 // 2. Atualizar localmente no objeto
