@@ -84,7 +84,7 @@ export const backend = {
 
             if (isVercel) {
                 console.log("[BACKEND] Salvando via GitHub API...");
-                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token');
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token') || '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';
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
