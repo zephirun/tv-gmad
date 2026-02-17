@@ -36,38 +36,57 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
     }, [currentItem, next]);
 
     const initYouTubePlayer = () => {
+        // Cleanup anterior
         if (ytPlayerRef.current) {
-            ytPlayerRef.current.destroy();
+            try {
+                ytPlayerRef.current.destroy();
+            } catch (e) {
+                console.warn("[PLAYER] Erro ao destruir player antigo:", e);
+            }
             ytPlayerRef.current = null;
         }
 
         const videoId = currentItem.src;
-        ytPlayerRef.current = new window.YT.Player(`yt-player-${videoId}`, {
-            videoId: videoId,
-            playerVars: {
-                autoplay: 1,
-                controls: 0,
-                mute: 1,
-                modestbranding: 1,
-                rel: 0,
-                showinfo: 0,
-                iv_load_policy: 3,
-                playsinline: 1
-            },
-            events: {
-                onReady: (event) => {
-                    event.target.playVideo();
-                    setIsLoading(false);
-                },
-                onStateChange: (event) => {
-                    // event.data === 0 significa que o vídeo acabou
-                    if (event.data === window.YT.PlayerState.ENDED) {
-                        next();
-                    }
-                },
-                onError: () => next()
+        // Esperar um micro-tick para garantir que o elemento id=`yt-player-${videoId}` existe no DOM
+        setTimeout(() => {
+            const targetId = `yt-player-${videoId}`;
+            const targetEl = document.getElementById(targetId);
+            if (!targetEl) {
+                console.warn("[PLAYER] Elemento alvo do YouTube não encontrado:", targetId);
+                return;
             }
-        });
+
+            try {
+                ytPlayerRef.current = new window.YT.Player(targetId, {
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 0,
+                        mute: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        showinfo: 0,
+                        iv_load_policy: 3,
+                        playsinline: 1
+                    },
+                    events: {
+                        onReady: (event) => {
+                            event.target.playVideo();
+                            setIsLoading(false);
+                        },
+                        onStateChange: (event) => {
+                            if (event.data === window.YT.PlayerState.ENDED) {
+                                next();
+                            }
+                        },
+                        onError: () => next()
+                    }
+                });
+            } catch (err) {
+                console.error("[PLAYER] Falha ao inicializar YouTube:", err);
+                next();
+            }
+        }, 50);
     };
 
     // Anti-travamento de carregamento (WebOS)
@@ -130,11 +149,12 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
             )}
 
             {currentItem.type === 'youtube' && (
-                <div
-                    key={currentItem.src}
-                    id={`yt-player-${currentItem.src}`}
-                    style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-                />
+                <div key={`yt-wrap-${currentItem.src}`} style={{ width: '100%', height: '100%' }}>
+                    <div
+                        id={`yt-player-${currentItem.src}`}
+                        style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+                    />
+                </div>
             )}
 
             <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '8px', zIndex: 60 }}>
