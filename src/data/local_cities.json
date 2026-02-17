@@ -24,27 +24,11 @@
           "duration": 15000
         },
         {
-          "type": "youtube",
-          "src": "YmJzfFOYAnw",
-          "title": "Lançamento Arauco 1",
-          "subtitle": "",
-          "duration": 8000,
-          "id": 1771288768757
-        },
-        {
           "id": "f-4",
           "type": "video",
           "src": "/madville/gmad_boas_escolhas.mp4",
           "title": "GMAD Boas Escolhas",
           "duration": null
-        },
-        {
-          "type": "youtube",
-          "src": "lo_hVEMUoKQ",
-          "title": "Lançamento Arauco 2",
-          "subtitle": "",
-          "duration": 8000,
-          "id": 1771344476478
         },
         {
           "id": "f-5",
@@ -61,14 +45,6 @@
           "duration": null
         },
         {
-          "type": "youtube",
-          "src": "Nx80QDyVB_o",
-          "title": "Lançamento Arauco 3",
-          "subtitle": "",
-          "duration": 8000,
-          "id": 1771344540399
-        },
-        {
           "id": "f-7",
           "type": "video",
           "src": "/madville/lumen_conceito.mp4",
@@ -83,14 +59,6 @@
           "duration": null
         },
         {
-          "type": "youtube",
-          "src": "KMyGed8xk2E",
-          "title": "Lançamento Arauco 4",
-          "subtitle": "",
-          "duration": 8000,
-          "id": 1771344574131
-        },
-        {
           "id": "f-9",
           "type": "video",
           "src": "/madville/zen_design.mp4",
@@ -103,14 +71,6 @@
           "src": "/madville/hafele.mp4",
           "title": "Hafele",
           "duration": null
-        },
-        {
-          "type": "youtube",
-          "src": "mceqis6nZX8",
-          "title": "Duratex You",
-          "subtitle": "",
-          "duration": 8000,
-          "id": 1771344674578
         },
         {
           "id": "f-11",
