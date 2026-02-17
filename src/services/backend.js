@@ -73,7 +73,7 @@ export const backend = {
                     const headers = { 'Accept': 'application/vnd.github.v3.raw' };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
-                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
+                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
                         headers
                     });
                     if (!res.ok) throw new Error(`GitHub fetch failed (${res.status})`);
@@ -196,17 +196,15 @@ export const backend = {
 
                 let getFileRes;
                 try {
-                    // Adicionando timestamp para FORÇAR o GitHub a não devolver o SHA antigo (cache)
-                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
+                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
                         headers: {
                             'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Cache-Control': 'no-cache'
+                            'Accept': 'application/vnd.github.v3+json'
                         }
                     });
                 } catch (netErr) {
-                    console.error("Erro de rede no GET:", netErr);
-                    throw new Error("Erro de conexão (GET) com o GitHub. Verifique sua rede.");
+                    console.error("[BACKEND] Erro fatal no fetch GET GitHub:", netErr);
+                    throw new Error(`Erro de conexão com GitHub: ${netErr.message || 'Verifique sua internet ou CORS'}`);
                 }
 
                 if (!getFileRes.ok) {
