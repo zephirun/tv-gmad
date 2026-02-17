@@ -96,7 +96,7 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
                 console.warn("[PLAYER] Mídia demorou demais para carregar. Pulando...");
                 next();
             }
-        }, 20000);
+        }, 60000); // Aumentado para 60s para YouTube/Videos lentos
         return () => clearTimeout(timer);
     }, [currentItem, isLoading, next]);
 

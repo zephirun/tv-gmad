@@ -584,7 +584,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             </div>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Duração (Segundos)</label>
-                                                <input type="number" style={s.input} value={newItem.duration / 1000} onChange={e => setNewItem({ ...newItem, duration: (parseInt(e.target.value) || 0) * 1000 })} disabled={newItem.type === 'video'} />
+                                                <input type="number" style={s.input} value={newItem.duration / 1000} onChange={e => setNewItem({ ...newItem, duration: (parseInt(e.target.value) || 0) * 1000 })} disabled={newItem.type === 'video' || newItem.type === 'youtube'} />
                                             </div>
                                         </div>
 
