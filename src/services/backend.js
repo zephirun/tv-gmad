@@ -65,18 +65,23 @@ export const backend = {
 
             if (isVercel) {
                 try {
-                    // Tenta ler do GitHub para ter o dado mais RECENTE sem esperar o deploy da Vercel
+                    const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
                     const REPO = 'zephirun/tv-gmad';
                     const FILE_PATH = 'src/data/local_cities.json';
+
+                    // Se tiver token, usa ele para evitar rate limit e cache agressivo
+                    const headers = { 'Accept': 'application/vnd.github.v3.raw' };
+                    if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+
                     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
-                        headers: { 'Accept': 'application/vnd.github.v3.raw' }
+                        headers
                     });
-                    if (!res.ok) throw new Error("GitHub fetch failed");
+                    if (!res.ok) throw new Error(`GitHub fetch failed (${res.status})`);
                     const allData = await res.json();
+                    console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados dinâmicos carregados do GitHub.`);
                     return (allData[collection] && allData[collection][docId]) || null;
                 } catch (e) {
-                    console.warn("GitHub dynamic getDoc failed, falling back to static:", e);
-                    // Fallback para o import estático (vai ser tratado no App.jsx ou via fetch local se existir)
+                    console.warn("[BACKEND] getDoc dinâmico falhou, usando estático:", e.message);
                 }
             }
 
@@ -191,10 +196,12 @@ export const backend = {
 
                 let getFileRes;
                 try {
-                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    // Adicionando timestamp para FORÇAR o GitHub a não devolver o SHA antigo (cache)
+                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
                         headers: {
                             'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Accept': 'application/vnd.github.v3+json'
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache'
                         }
                     });
                 } catch (netErr) {

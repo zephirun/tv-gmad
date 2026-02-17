@@ -416,12 +416,14 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                 });
 
                 alert("Tudo sincronizado com sucesso via GitHub!");
+                // Forçar recarregamento completo para puxar dados dinâmicos do GitHub
+                window.location.reload();
             } else {
                 localStorage.setItem('gmad_playlist', JSON.stringify(playlist));
                 localStorage.setItem('gmad_news', JSON.stringify(news));
                 alert("Salvo localmente!");
+                onClose();
             }
-            onClose();
         } catch (error) {
             alert("Erro: " + error.message);
         } finally {
