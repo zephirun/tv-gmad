@@ -57,18 +57,36 @@ export default function App() {
     setIsLocked(false);
   };
 
-  // CARREGAMENTO DE DADOS LOCAIS (Substitui Supabase)
+  // CARREGAMENTO DE DADOS DINÂMICOS (GitHub se estiver na Vercel)
   useEffect(() => {
-    if (cityData) {
-      // Ajuste para suportar tanto array direto quanto objeto com { items: [...] }
-      const p = cityData.playlist?.items || cityData.playlist || [];
-      const n = cityData.news?.items || cityData.news || [];
+    const loadAppData = async () => {
+      setIsLoadingData(true);
+      try {
+        // Tenta buscar o dado mais fresco (especialmente útil no Admin)
+        const [pDoc, nDoc, sDoc] = await Promise.all([
+          backend.db.getDoc(cityKey, 'playlist'),
+          backend.db.getDoc(cityKey, 'news'),
+          backend.db.getDoc(cityKey, 'settings')
+        ]);
 
-      setPlaylist(p);
-      setNewsItems(n);
-      setSettings(cityData.settings || {});
-      setIsLoadingData(false);
-    }
+        if (pDoc) setPlaylist(pDoc.items || pDoc || []);
+        if (nDoc) setNewsItems(nDoc.items || nDoc || []);
+        if (sDoc) setSettings(sDoc || {});
+
+      } catch (err) {
+        console.warn("Falha ao carregar dados dinâmicos, usando estáticos:", err);
+        // Fallback para o que já vem no import estático se falhar
+        if (cityData) {
+          setPlaylist(cityData.playlist?.items || cityData.playlist || []);
+          setNewsItems(cityData.news?.items || cityData.news || []);
+          setSettings(cityData.settings || {});
+        }
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadAppData();
   }, [cityKey, cityData]);
 
   useEffect(() => {

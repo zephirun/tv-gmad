@@ -61,6 +61,25 @@ export const backend = {
         },
 
         getDoc: async (collection, docId) => {
+            const isVercel = window.location.hostname.includes('vercel.app');
+
+            if (isVercel) {
+                try {
+                    // Tenta ler do GitHub para ter o dado mais RECENTE sem esperar o deploy da Vercel
+                    const REPO = 'zephirun/tv-gmad';
+                    const FILE_PATH = 'src/data/local_cities.json';
+                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
+                        headers: { 'Accept': 'application/vnd.github.v3.raw' }
+                    });
+                    if (!res.ok) throw new Error("GitHub fetch failed");
+                    const allData = await res.json();
+                    return (allData[collection] && allData[collection][docId]) || null;
+                } catch (e) {
+                    console.warn("GitHub dynamic getDoc failed, falling back to static:", e);
+                    // Fallback para o import estático (vai ser tratado no App.jsx ou via fetch local se existir)
+                }
+            }
+
             if (PROVIDER === 'LOCAL') {
                 try {
                     const res = await fetch('/api/get-local-data');
@@ -194,6 +213,7 @@ export const backend = {
 
                 if (!allData[collection]) allData[collection] = {};
 
+                console.log(`[BACKEND] Mesclando ${Object.keys(docsMap).length} documentos em '${collection}'...`);
                 Object.entries(docsMap).forEach(([docId, data]) => {
                     if (!allData[collection][docId]) allData[collection][docId] = {};
                     if (typeof data === 'object' && !Array.isArray(data)) {
