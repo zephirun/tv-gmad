@@ -17,6 +17,14 @@
           "duration": null
         },
         {
+          "type": "youtube",
+          "src": "YmJzfFOYAnw",
+          "title": "Arauco Lançamento 1",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1771286589580
+        },
+        {
           "id": "f-2",
           "type": "image",
           "src": "/madville/promo_21_anos.jpg",
