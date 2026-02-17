@@ -739,7 +739,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             </div>
 
                                             {/* Duration Edit */}
-                                            {item.type !== 'video' && (
+                                            {item.type !== 'video' && item.type !== 'youtube' && (
                                                 <div style={{
                                                     display: 'flex', alignItems: 'center', gap: '8px',
                                                     backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px 12px',
