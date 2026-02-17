@@ -85,6 +85,14 @@
           "src": "/madville/makita.mp4",
           "title": "Makita",
           "duration": null
+        },
+        {
+          "type": "youtube",
+          "src": "YmJzfFOYAnw",
+          "title": "Lançamento Arauco 1",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1771288768757
         }
       ]
     },
