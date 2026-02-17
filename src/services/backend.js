@@ -128,8 +128,10 @@ export const backend = {
                 const fileData = await getFileRes.json();
 
                 if (!fileData.content) {
-                    console.error("[BACKEND] Resposta do GitHub sem conteúdo:", fileData);
-                    throw new Error("O GitHub não retornou o conteúdo do arquivo. Tente novamente.");
+                    const keys = Object.keys(fileData).join(', ');
+                    const isArray = Array.isArray(fileData);
+                    console.error("[BACKEND] Erro de conteúdo GitHub:", { isArray, keys });
+                    throw new Error(`O GitHub não retornou o conteúdo do arquivo (Tipo: ${isArray ? 'Pasta' : 'Arquivo'}, Campos: ${keys}). Verifique se o caminho está correto.`);
                 }
 
                 // Decodificar conteúdo (Base64 -> UTF-8 -> JSON) - Limpando quebras de linha que o GitHub envia
@@ -220,8 +222,10 @@ export const backend = {
                 const fileData = await getFileRes.json();
 
                 if (!fileData.content) {
-                    console.error("[BACKEND] Resposta do GitHub (Batch) sem conteúdo:", fileData);
-                    throw new Error("Falha ao ler dados do GitHub. O arquivo pode estar vazio ou inacessível.");
+                    const keys = Object.keys(fileData).join(', ');
+                    const isArray = Array.isArray(fileData);
+                    console.error("[BACKEND] Erro de conteúdo GitHub (Batch):", { isArray, keys });
+                    throw new Error(`Falha ao ler dados (Tipo: ${isArray ? 'Pasta' : 'Arquivo'}, Campos: ${keys}). O arquivo/SHA pode estar inacessível.`);
                 }
 
                 const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
