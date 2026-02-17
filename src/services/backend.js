@@ -69,19 +69,26 @@ export const backend = {
                     const REPO = 'zephirun/tv-gmad';
                     const FILE_PATH = 'src/data/local_cities.json';
 
-                    // Se tiver token, usa ele para evitar rate limit e cache agressivo
-                    const headers = { 'Accept': 'application/vnd.github.v3.raw' };
+                    // Usamos o padrão base64 para evitar confusão de cache com o setDoc
+                    const headers = { 'Accept': 'application/vnd.github.v3+json' };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
-                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
                         headers
                     });
                     if (!res.ok) throw new Error(`GitHub fetch failed (${res.status})`);
-                    const allData = await res.json();
-                    console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados dinâmicos carregados do GitHub.`);
+
+                    const fileData = await res.json();
+                    if (!fileData.content) throw new Error("GitHub metadata missing content");
+
+                    // Decodificar Base64
+                    const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
+                    const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
+
+                    console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados carregados e decodificados do GitHub.`);
                     return (allData[collection] && allData[collection][docId]) || null;
                 } catch (e) {
-                    console.warn("[BACKEND] getDoc dinâmico falhou, usando estático:", e.message);
+                    console.warn("[BACKEND] getDoc dinâmico falhou:", e.message);
                 }
             }
 
@@ -115,23 +122,21 @@ export const backend = {
 
                 if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
 
-                // 1. Pegar o arquivo atual do GitHub (para ter o SHA e o conteúdo)
-                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                // 1. Pegar o arquivo atual do GitHub (usamos metadata para ter o SHA e conteúdo base64)
+                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
                 });
 
                 if (!getFileRes.ok) {
                     const errorData = await getFileRes.json().catch(() => ({}));
-                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message || 'Verifique o Token e o Repositório'}`);
+                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message || 'Falha ao buscar SHAs'}`);
                 }
 
                 const fileData = await getFileRes.json();
 
-                if (!fileData.content) {
-                    const keys = Object.keys(fileData).join(', ');
-                    const isArray = Array.isArray(fileData);
-                    console.error("[BACKEND] Erro de conteúdo GitHub:", { isArray, keys });
-                    throw new Error(`O GitHub não retornou o conteúdo do arquivo (Tipo: ${isArray ? 'Pasta' : 'Arquivo'}, Campos: ${keys}). Verifique se o caminho está correto.`);
+                if (!fileData || !fileData.content) {
+                    console.error("[BACKEND] Resposta inesperada do GitHub (setDoc):", fileData);
+                    throw new Error("Não foi possível obter o conteúdo do GitHub para edição. Tente recarregar a página.");
                 }
 
                 // Decodificar conteúdo (Base64 -> UTF-8 -> JSON) - Limpando quebras de linha que o GitHub envia
@@ -203,7 +208,8 @@ export const backend = {
 
                 let getFileRes;
                 try {
-                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    // Adicionamos ?v para evitar que o cache do browser nos dê a versão antiga (raw) do getDoc
+                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
                         headers: {
                             'Authorization': `token ${GITHUB_TOKEN}`,
                             'Accept': 'application/vnd.github.v3+json'
@@ -221,11 +227,9 @@ export const backend = {
 
                 const fileData = await getFileRes.json();
 
-                if (!fileData.content) {
-                    const keys = Object.keys(fileData).join(', ');
-                    const isArray = Array.isArray(fileData);
-                    console.error("[BACKEND] Erro de conteúdo GitHub (Batch):", { isArray, keys });
-                    throw new Error(`Falha ao ler dados (Tipo: ${isArray ? 'Pasta' : 'Arquivo'}, Campos: ${keys}). O arquivo/SHA pode estar inacessível.`);
+                if (!fileData || !fileData.content) {
+                    console.error("[BACKEND] Resposta inesperada do GitHub (Batch):", fileData);
+                    throw new Error("Não foi possível obter o conteúdo do GitHub para salvamento em lote. Tente recarregar a página.");
                 }
 
                 const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
