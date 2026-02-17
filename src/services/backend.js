@@ -127,6 +127,11 @@ export const backend = {
 
                 const fileData = await getFileRes.json();
 
+                if (!fileData.content) {
+                    console.error("[BACKEND] Resposta do GitHub sem conteúdo:", fileData);
+                    throw new Error("O GitHub não retornou o conteúdo do arquivo. Tente novamente.");
+                }
+
                 // Decodificar conteúdo (Base64 -> UTF-8 -> JSON) - Limpando quebras de linha que o GitHub envia
                 const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
                 const currentContent = decodeURIComponent(escape(atob(cleanBase64)));
@@ -213,6 +218,12 @@ export const backend = {
                 }
 
                 const fileData = await getFileRes.json();
+
+                if (!fileData.content) {
+                    console.error("[BACKEND] Resposta do GitHub (Batch) sem conteúdo:", fileData);
+                    throw new Error("Falha ao ler dados do GitHub. O arquivo pode estar vazio ou inacessível.");
+                }
+
                 const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
                 const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
 
