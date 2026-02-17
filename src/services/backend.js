@@ -170,13 +170,22 @@ export const backend = {
 
                 if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
 
-                const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Cache-Control': 'no-cache' }
-                });
+                let getFileRes;
+                try {
+                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                } catch (netErr) {
+                    console.error("Erro de rede no GET:", netErr);
+                    throw new Error("Erro de conexão (GET) com o GitHub. Verifique sua rede.");
+                }
 
                 if (!getFileRes.ok) {
                     const errorData = await getFileRes.json().catch(() => ({}));
-                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message}`);
+                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message || 'Falha ao buscar SHAs'}`);
                 }
 
                 const fileData = await getFileRes.json();
@@ -194,17 +203,30 @@ export const backend = {
                     }
                 });
 
-                const updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `Update batch ${Object.keys(docsMap).join(', ')} via Admin Panel`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
-                        sha: fileData.sha
-                    })
-                });
+                let updateRes;
+                try {
+                    updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: `Update batch ${Object.keys(docsMap).join(', ')} via Admin Panel`,
+                            content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
+                            sha: fileData.sha
+                        })
+                    });
+                } catch (netErr) {
+                    console.error("Erro de rede no PUT:", netErr);
+                    throw new Error("Erro de conexão (PUT) com o GitHub. Verifique o Token ou Internet.");
+                }
 
-                if (!updateRes.ok) throw new Error("Erro ao salvar lote no GitHub.");
+                if (!updateRes.ok) {
+                    const errorData = await updateRes.json().catch(() => ({}));
+                    throw new Error(`Erro no Commit (${updateRes.status}): ${errorData.message}`);
+                }
                 return { success: true };
             }
 
