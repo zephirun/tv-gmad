@@ -17,13 +17,6 @@
           "duration": null
         },
         {
-          "id": "f-2",
-          "type": "image",
-          "src": "/madville/promo_21_anos.jpg",
-          "title": "Promoção 21 Anos",
-          "duration": 15000
-        },
-        {
           "id": "f-4",
           "type": "video",
           "src": "/madville/gmad_boas_escolhas.mp4",
