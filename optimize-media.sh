@@ -41,10 +41,10 @@ for city in "${CITIES[@]}"; do
         # Ignora arquivos que já foram otimizados recentemente se quiser (opcional)
         echo "🎥 Comprimindo: $filename"
         
-        # CRF 28 é o equilíbrio entre peso e qualidade
+        # CRF 32 para garantir que fique abaixo de 25MB na Cloudflare
         # -vcodec libx264 para compatibilidade com TVs antigas
         # -acodec mp3 para áudio leve e compatível
-        ffmpeg -y -i "$f" -vcodec libx264 -crf 28 -preset faster -acodec mp3 "${f}.tmp.mp4" -hide_banner -loglevel error
+        ffmpeg -y -i "$f" -vcodec libx264 -crf 32 -preset faster -acodec mp3 "${f}.tmp.mp4" -hide_banner -loglevel error
         
         if [ $? -eq 0 ]; then
             mv "${f}.tmp.mp4" "$f"

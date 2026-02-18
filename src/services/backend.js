@@ -61,9 +61,9 @@ export const backend = {
         },
 
         getDoc: async (collection, docId) => {
-            const isVercel = window.location.hostname.includes('vercel.app');
+            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
 
-            if (isVercel) {
+            if (isRemote) {
                 try {
                     const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
                     const REPO = 'zephirun/tv-gmad';
@@ -111,9 +111,8 @@ export const backend = {
 
         // SALVAMENTO HÍBRIDO (LOCAL + GITHUB PARA VERCEL)
         setDoc: async (collection, docId, data) => {
-            const isVercel = window.location.hostname.includes('vercel.app');
-
-            if (isVercel) {
+            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
+            if (isRemote) {
                 console.log("[BACKEND] Salvando via GitHub API...");
                 // Chave v3 - o usuário deve colar o novo token no painel admin
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
@@ -196,9 +195,8 @@ export const backend = {
         },
 
         setDocsBatch: async (collection, docsMap) => {
-            const isVercel = window.location.hostname.includes('vercel.app');
-
-            if (isVercel) {
+            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
+            if (isRemote) {
                 console.log("[BACKEND] Salvando lote via GitHub API...");
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
                 const REPO = 'zephirun/tv-gmad';
