@@ -43,19 +43,33 @@ for city in "${CITIES[@]}"; do
         # Codec de vídeo: H.264 Baseline profile (máxima compatibilidade WebOS/TVs antigas)
         # Codec de áudio: AAC (MP3 no container MP4 NÃO é suportado pelo WebOS)
         # -movflags +faststart: mova o índice para o início do arquivo (streaming progressivo)
-        # CRF 28: boa qualidade com tamanho reduzido
+        # CRF 32: compressão agressiva para caber no limite de 25MB do Cloudflare Pages
         ffmpeg -y -i "$f" \
-            -vcodec libx264 -profile:v baseline -level 3.1 -crf 28 -preset faster \
-            -acodec aac -b:a 128k -ar 44100 \
+            -vcodec libx264 -profile:v baseline -level 3.1 -crf 32 -preset faster \
+            -acodec aac -b:a 96k -ar 44100 \
             -movflags +faststart \
             "${f}.tmp.mp4" -hide_banner -loglevel error
         
         if [ $? -eq 0 ]; then
-            mv "${f}.tmp.mp4" "$f"
-            echo "✅ Concluído: $filename"
+            # Verificar tamanho do arquivo resultante (limite 25MB do Cloudflare Pages)
+            SIZE_BYTES=$(stat -c%s "${f}.tmp.mp4")
+            MAX_BYTES=$((25 * 1024 * 1024))  # 25MB em bytes
+            
+            if [ "$SIZE_BYTES" -gt "$MAX_BYTES" ]; then
+                SIZE_MB=$(echo "scale=1; $SIZE_BYTES / 1048576" | bc)
+                echo "⚠️  IGNORADO: $filename ainda ficou ${SIZE_MB}MB após compressão (limite: 25MB)"
+                echo "   → Hospede este vídeo externamente (YouTube ou Supabase Storage)"
+                rm "${f}.tmp.mp4"
+                rm "$f"   # Remove da pasta public para não tentar subir
+            else
+                mv "${f}.tmp.mp4" "$f"
+                SIZE_MB=$(echo "scale=1; $SIZE_BYTES / 1048576" | bc)
+                echo "✅ Concluído: $filename (${SIZE_MB}MB)"
+            fi
         else
-            echo "❌ Erro ao comprimir $filename"
+            echo "❌ Erro ao comprimir $filename (arquivo pode estar corrompido)"
             rm "${f}.tmp.mp4" 2>/dev/null
+            rm "$f"   # Remove arquivo corrompido da pasta public
         fi
     done
 

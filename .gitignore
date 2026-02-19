@@ -25,3 +25,11 @@ dist-ssr
 
 .vercel
 tv-gmad-backup-stable.tar.gz
+
+# Videos grandes demais para Cloudflare Pages (limite 25MB por arquivo)
+# Esses videos precisam ser hospedados externamente (ex: YouTube, Supabase CDN)
+public/madville/blum_corporativo.mp4
+public/madville/sayerlack.mp4
+public/madville/corredica_invisa.mp4
+public/madville/corredica_telescopica.mp4
+public/madville/projetos_solucoes.mp4
