@@ -85,8 +85,8 @@
     }
   },
   "default": {
-    "playlist": [
-      {
+    "playlist": {
+      "0": {
         "id": 1,
         "type": "image",
         "src": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920",
@@ -94,22 +94,45 @@
         "subtitle": "A maior variedade da região",
         "duration": 8000
       },
-      {
+      "1": {
         "id": 3,
         "type": "video",
         "src": "/madville/gmad_boas_escolhas.mp4",
         "title": "Soluções GMAD",
         "subtitle": "Qualidade garantida em cada detalhe",
         "duration": null
-      }
-    ],
-    "news": [
-      "GMAD - Tudo para o Marceneiro",
-      "Qualidade e Variedade em MDF e Ferragens",
-      "Confira nossas ofertas exclusivas na loja!"
-    ],
+      },
+      "items": [
+        {
+          "id": 1,
+          "type": "image",
+          "src": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1920",
+          "title": "MDF e Ferragens",
+          "subtitle": "A maior variedade da região",
+          "duration": 8000
+        },
+        {
+          "id": 3,
+          "type": "video",
+          "src": "/madville/gmad_boas_escolhas.mp4",
+          "title": "Soluções GMAD",
+          "subtitle": "Qualidade garantida em cada detalhe",
+          "duration": null
+        }
+      ]
+    },
+    "news": {
+      "0": "GMAD - Tudo para o Marceneiro",
+      "1": "Qualidade e Variedade em MDF e Ferragens",
+      "2": "Confira nossas ofertas exclusivas na loja!",
+      "items": [
+        "GMAD - Tudo para o Marceneiro",
+        "Qualidade e Variedade em MDF e Ferragens",
+        "Confira nossas ofertas exclusivas na loja!"
+      ]
+    },
     "settings": {
-      "weatherCity": "Joinville",
+      "weatherCity": "Curitiba",
       "instagramUrl": "https://instagram.com/gmad_online",
       "instagramUser": "@gmad_online"
     }
