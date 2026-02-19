@@ -45,13 +45,6 @@
           "duration": null
         },
         {
-          "id": "f-8",
-          "type": "video",
-          "src": "/madville/blum_corporativo.mp4",
-          "title": "Blum Corporativo",
-          "duration": null
-        },
-        {
           "id": "f-9",
           "type": "video",
           "src": "/madville/zen_design.mp4",
@@ -63,13 +56,6 @@
           "type": "video",
           "src": "/madville/hafele.mp4",
           "title": "Hafele",
-          "duration": null
-        },
-        {
-          "id": "f-11",
-          "type": "video",
-          "src": "/madville/sayerlack.mp4",
-          "title": "Sayerlack",
           "duration": null
         },
         {
