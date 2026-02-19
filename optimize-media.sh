@@ -38,13 +38,17 @@ for city in "${CITIES[@]}"; do
         [ -e "$f" ] || continue
         filename=$(basename "$f")
         
-        # Ignora arquivos que já foram otimizados recentemente se quiser (opcional)
         echo "🎥 Comprimindo: $filename"
         
-        # CRF 32 para garantir que fique abaixo de 25MB na Cloudflare
-        # -vcodec libx264 para compatibilidade com TVs antigas
-        # -acodec mp3 para áudio leve e compatível
-        ffmpeg -y -i "$f" -vcodec libx264 -crf 32 -preset faster -acodec mp3 "${f}.tmp.mp4" -hide_banner -loglevel error
+        # Codec de vídeo: H.264 Baseline profile (máxima compatibilidade WebOS/TVs antigas)
+        # Codec de áudio: AAC (MP3 no container MP4 NÃO é suportado pelo WebOS)
+        # -movflags +faststart: mova o índice para o início do arquivo (streaming progressivo)
+        # CRF 28: boa qualidade com tamanho reduzido
+        ffmpeg -y -i "$f" \
+            -vcodec libx264 -profile:v baseline -level 3.1 -crf 28 -preset faster \
+            -acodec aac -b:a 128k -ar 44100 \
+            -movflags +faststart \
+            "${f}.tmp.mp4" -hide_banner -loglevel error
         
         if [ $? -eq 0 ]; then
             mv "${f}.tmp.mp4" "$f"

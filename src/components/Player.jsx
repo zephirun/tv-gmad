@@ -5,6 +5,14 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
     const [retryCount, setRetryCount] = useState(0);
     const ytPlayerRef = useRef(null);
     const containerRef = useRef(null);
+    const videoRef = useRef(null);
+    const stalledTimerRef = useRef(null);
+
+    // Reseta estado ao trocar de item
+    useEffect(() => {
+        setIsLoading(true);
+        setRetryCount(0);
+    }, [currentItem?.src]);
 
     // Efeito para carregar o próximo item
     useEffect(() => {
@@ -33,6 +41,24 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
                 initYouTubePlayer();
             }
         }
+    }, [currentItem, next]);
+
+    // Polling fallback para WebOS: verifica se o vídeo chegou ao fim
+    // (WebOS frequentemente não dispara onEnded)
+    useEffect(() => {
+        if (currentItem?.type !== 'video') return;
+
+        const interval = setInterval(() => {
+            const vid = videoRef.current;
+            if (!vid) return;
+            if (vid.duration > 0 && vid.currentTime >= vid.duration - 0.5) {
+                console.log("[PLAYER] Polling detectou fim do vídeo. Chamando next().");
+                clearInterval(interval);
+                next();
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
     }, [currentItem, next]);
 
     const initYouTubePlayer = () => {
@@ -89,14 +115,16 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
         }, 50);
     };
 
-    // Anti-travamento de carregamento (WebOS)
+    // Anti-travamento de carregamento (WebOS) — 25s para vídeos, 30s para YouTube
     useEffect(() => {
+        if (!currentItem || currentItem.type === 'image') return;
+        const timeout = currentItem.type === 'youtube' ? 30000 : 25000;
         const timer = setTimeout(() => {
-            if (isLoading && currentItem?.type !== 'image') {
+            if (isLoading) {
                 console.warn("[PLAYER] Mídia demorou demais para carregar. Pulando...");
                 next();
             }
-        }, 60000); // Aumentado para 60s para YouTube/Videos lentos
+        }, timeout);
         return () => clearTimeout(timer);
     }, [currentItem, isLoading, next]);
 
@@ -127,6 +155,7 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
             {currentItem.type === 'video' && (
                 <video
                     key={currentItem.src}
+                    ref={videoRef}
                     src={currentItem.src}
                     autoPlay
                     muted
@@ -137,9 +166,17 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
                         setRetryCount(0);
                     }}
                     onEnded={() => next()}
-                    onError={() => {
+                    onError={(e) => {
+                        console.warn('[PLAYER] Erro no vídeo:', currentItem.src, e.target.error?.code);
                         if (retryCount < 1) {
+                            // Recarrega o src de verdade (simples incremento de estado não é suficiente no WebOS)
                             setRetryCount(prev => prev + 1);
+                            const vid = videoRef.current;
+                            if (vid) {
+                                const src = vid.src;
+                                vid.src = '';
+                                setTimeout(() => { vid.src = src; vid.load(); vid.play().catch(() => { }); }, 500);
+                            }
                         } else {
                             next();
                         }

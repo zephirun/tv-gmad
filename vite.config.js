@@ -8,61 +8,48 @@ export default defineConfig({
   plugins: [
     react(),
     localApiPlugin(),
-    // Plugin para suporte a navegadores antigos (Smart TVs, etc)
+    // Plugin para suporte a navegadores antigos (Smart TVs / WebOS)
     legacy({
-      targets: ['> 0.5%', 'last 2 versions', 'Firefox ESR', 'not dead', 'chrome >= 30', 'android >= 4', 'safari >= 7', 'opera >= 20'],
+      targets: ['chrome >= 38', 'safari >= 9', 'firefox >= 40', 'opera >= 25'],
       additionalLegacyPolyfills: [
         'regenerator-runtime/runtime',
-        'intersection-observer',
-        'proxy-polyfill/proxy.min.js',
         'whatwg-fetch'
       ],
       renderLegacyChunks: true,
-      modernPolyfills: true,
+      modernPolyfills: false,
       polyfills: [
         'es.promise',
         'es.promise.finally',
-        'es.symbol',
-        'es.symbol.iterator',
-        'es.array.iterator',
         'es.object.assign',
-        'es.object.keys',
-        'es.object.entries',
-        'es.object.values',
         'es.array.includes',
         'es.array.find',
-        'es.array.find-index',
         'es.string.includes',
-        'es.string.starts-with',
-        'es.string.ends-with',
         'es.map',
         'es.set',
-        'es.weak-map',
-        'es.weak-set',
-        'web.url',
-        'web.url-search-params',
-        'web.dom-collections.for-each',
-        'es.object.get-own-property-descriptors',
-        'es.promise.all-settled'
       ]
     })
   ],
   server: {
-    host: true, // Libera o acesso via IP (útil para redes)
+    host: true,
     port: 3000,
   },
   build: {
-    // Compatibilidade com navegadores mais antigos
     target: 'es2015',
-    // Gera sourcemaps para debug
-    sourcemap: true,
-    // Otimizações
-    minify: 'terser',
-    // Mantém logs para debug
-    terserOptions: {
-      compress: {
-        drop_console: false,
-        drop_debugger: false,
+    // Sourcemap desativado em prod para build mais rápido
+    // (ative com SOURCEMAP=true se precisar debugar)
+    sourcemap: process.env.SOURCEMAP === 'true',
+    // esbuild é ~10x mais rápido que terser
+    minify: 'esbuild',
+    esbuildOptions: {
+      // Mantém console.log para debug no WebOS
+      drop: [],
+    },
+    rollupOptions: {
+      output: {
+        // Divide o bundle em chunks menores para cache melhor
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        }
       }
     }
   }
