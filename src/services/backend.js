@@ -116,7 +116,21 @@ export const backend = {
 
         // SALVAMENTO HÍBRIDO
         setDoc: async (collection, docId, data) => {
+            return backend.db.setDocsBatch(collection, { [docId]: data });
+        },
+
+        // SALVAMENTO MÚLTIPLO ATÔMICO (GITHUB)
+        setDocsBatch: async (collection, docsMap) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
+
+            // Injeta o sinal de recarga automaticamente se estivermos salvando settings ou se for um save geral
+            const now = Date.now();
+            if (docsMap.settings) {
+                docsMap.settings.system_reload_timestamp = now;
+            } else {
+                docsMap.settings = { system_reload_timestamp: now };
+            }
+
             if (isRemote) {
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
                     localStorage.getItem('gmad_github_token') ||
@@ -145,13 +159,17 @@ export const backend = {
                 const allData = JSON.parse(currentContent);
 
                 if (!allData[collection]) allData[collection] = {};
-                if (!allData[collection][docId]) allData[collection][docId] = {};
 
-                if (typeof data === 'object' && !Array.isArray(data)) {
-                    allData[collection][docId] = { ...allData[collection][docId], ...data };
-                } else {
-                    allData[collection][docId] = data;
-                }
+                // Aplica todas as mudanças do batch
+                Object.entries(docsMap).forEach(([docId, data]) => {
+                    if (!allData[collection][docId]) allData[collection][docId] = {};
+
+                    if (typeof data === 'object' && !Array.isArray(data)) {
+                        allData[collection][docId] = { ...allData[collection][docId], ...data };
+                    } else {
+                        allData[collection][docId] = data;
+                    }
+                });
 
                 const jsonString = JSON.stringify(allData, null, 2);
                 const utf8Bytes = new TextEncoder().encode(jsonString);
@@ -164,20 +182,20 @@ export const backend = {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: `Update ${collection} ${docId}`,
+                        message: `Batch update ${collection} (Auto-reload triggered)`,
                         content: base64Content,
                         sha: fileData.sha
                     })
                 });
 
                 if (!updateRes.ok) throw new Error("Erro ao salvar no GitHub.");
-                return { success: true };
+                return { success: true, timestamp: now };
             }
 
-            const response = await fetch('/api/save-city-data', {
+            const response = await fetch('/api/save-city-data-batch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ collectionId: collection, docId, data })
+                body: JSON.stringify({ collectionId: collection, docsMap })
             });
             return response.json();
         }
