@@ -12,6 +12,28 @@ export const backend = {
         getDoc: async (collection, docId) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
 
+            // 0. PRIORIDADE MÁXIMA PARA SETTINGS: SUPABASE (Real-time, sem cache de CDN)
+            if (isRemote && docId === 'settings' && supabase) {
+                try {
+                    const { data, error } = await supabase
+                        .from('tv_collections')
+                        .select('settings')
+                        .eq('collection_id', collection)
+                        .maybeSingle();
+
+                    if (!error && data && data.settings) {
+                        console.log(`[BACKEND] getDoc('${collection}', 'settings') -> Sucesso via SUPABASE (Instante)`);
+                        return {
+                            data: data.settings,
+                            source: "SUPABASE_REALTIME",
+                            hasToken: !!(localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token'))
+                        };
+                    }
+                } catch (e) {
+                    console.warn("[BACKEND] Falha ao ler settings via Supabase, tentando GitHub...", e.message);
+                }
+            }
+
             if (isRemote) {
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
@@ -55,7 +77,7 @@ export const backend = {
                     console.warn("[BACKEND] Erro na API GitHub:", e.message);
                 }
 
-                // 2. FALLBACK 1: JSDELIVR (Muitas vezes mais rápido que o Raw para atualizações pequenas)
+                // 2. FALLBACK 1: JSDELIVR
                 try {
                     const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`, {
                         cache: 'no-store'
@@ -73,7 +95,7 @@ export const backend = {
                     console.warn("[BACKEND] Fallback JSDELIVR falhou:", e.message);
                 }
 
-                // 3. FALLBACK 2: GITHUB RAW (Atenção: Cache do Cloudflare/GitHub pode demorar ~5min)
+                // 3. FALLBACK 2: GITHUB RAW
                 try {
                     const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
                         cache: 'no-store'
@@ -115,7 +137,24 @@ export const backend = {
         setDoc: async (collection, docId, data) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
             if (isRemote) {
-                console.log("[BACKEND] Salvando via GitHub API...");
+                // 1. ATUALIZAÇÃO NO SUPABASE (Sinalização Instantânea)
+                // Se for settings, salvamos aqui para que todas as TVs recebam o sinal na hora
+                if (supabase) {
+                    try {
+                        console.log(`[BACKEND] Propagando '${docId}' via Supabase...`);
+                        const { error } = await supabase
+                            .from('tv_collections')
+                            .upsert({
+                                collection_id: collection,
+                                [docId]: data
+                            });
+                        if (error) console.warn("[BACKEND] Erro ao sincronizar com Supabase:", error.message);
+                    } catch (e) {
+                        console.warn("[BACKEND] Supabase falhou:", e.message);
+                    }
+                }
+
+                console.log("[BACKEND] Salvando persistência via GitHub API...");
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token');
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
