@@ -37,6 +37,22 @@ export const backend = {
                     localStorage.getItem('gmad_github_token') ||
                     import.meta.env.VITE_GITHUB_TOKEN;
 
+                // 1. TENTATIVA MESMA ORIGEM (Sempre funciona em TVs se o app carregou e ignora rate limits)
+                try {
+                    const sameOriginRes = await fetch(`/data/local_cities.json?${cacheBuster}`);
+                    if (sameOriginRes.ok) {
+                        const allData = await sameOriginRes.json();
+                        return {
+                            data: (allData[collection] && allData[collection][docId]) || null,
+                            source: "SAME_ORIGIN",
+                            hasToken: !!GITHUB_TOKEN
+                        };
+                    }
+                } catch (e) {
+                    console.warn("[BACKEND] Fallback SAME_ORIGIN falhou:", e.name, e.message);
+                }
+
+                // 2. TENTATIVA VIA API OFICIAL (INSTANTÂNEO SE TIVER TOKEN)
                 try {
                     // Removendo Accept para evitar preflight em TVs antigas
                     const headers = {};
@@ -71,44 +87,34 @@ export const backend = {
                                 hasToken: !!GITHUB_TOKEN
                             };
                         }
-                    } else {
-                        console.warn(`[BACKEND] API GitHub falhou: ${res.status}`);
                     }
                 } catch (e) {
                     console.warn("[BACKEND] Erro na API GitHub:", e.name, e.message);
                 }
 
-                // 2. FALLBACK 1: JSDELIVR
-                try {
-                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`);
-                    if (jsDelivrRes.ok) {
-                        const allData = await jsDelivrRes.json();
-                        return {
-                            data: (allData[collection] && allData[collection][docId]) || null,
-                            source: "JSDELIVR",
-                            hasToken: !!GITHUB_TOKEN
-                        };
+                // 3. FALLBACKS EXTERNOS (JSDELIVR / GITHUB RAW)
+                const fallbacks = [
+                    `https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`,
+                    `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`
+                ];
+
+                for (const url of fallbacks) {
+                    try {
+                        const fbRes = await fetch(url);
+                        if (fbRes.ok) {
+                            const allData = await fbRes.json();
+                            return {
+                                data: (allData[collection] && allData[collection][docId]) || null,
+                                source: url.includes('jsdelivr') ? "JSDELIVR" : "GITHUB_RAW",
+                                hasToken: !!GITHUB_TOKEN
+                            };
+                        }
+                    } catch (e) {
+                        console.warn(`[BACKEND] Fallback ${url} falhou:`, e.name, e.message);
                     }
-                } catch (e) {
-                    console.warn("[BACKEND] Fallback JSDELIVR falhou:", e.name, e.message);
                 }
 
-                // 3. FALLBACK 2: GITHUB RAW
-                try {
-                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`);
-                    if (rawRes.ok) {
-                        const allData = await rawRes.json();
-                        return {
-                            data: (allData[collection] && allData[collection][docId]) || null,
-                            source: "GITHUB_RAW",
-                            hasToken: !!GITHUB_TOKEN
-                        };
-                    } else {
-                        throw new Error(`Status ${rawRes.status}`);
-                    }
-                } catch (e) {
-                    throw new Error(`Falha total fetch: ${e.name} ${e.message}`);
-                }
+                throw new Error("Falha total na busca de dados remotos.");
             }
 
             // Fallback LOCAL (Desktop)
@@ -151,6 +157,7 @@ export const backend = {
 
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
+                const PUBLIC_PATH = 'public/data/local_cities.json';
 
                 if (!GITHUB_TOKEN) throw new Error("Token não disponível.");
 
@@ -200,6 +207,28 @@ export const backend = {
                         sha: fileData.sha
                     })
                 });
+
+                // Tenta atualizar também o arquivo no public/ (se ele já existir no repo)
+                try {
+                    const getPublicRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PUBLIC_PATH}?v=${Date.now()}`, {
+                        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+                    });
+                    if (getPublicRes.ok) {
+                        const publicData = await getPublicRes.json();
+                        await fetch(`https://api.github.com/repos/${REPO}/contents/${PUBLIC_PATH}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `token ${GITHUB_TOKEN}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                message: `Sync public batch update ${collection}`,
+                                content: base64Content,
+                                sha: publicData.sha
+                            })
+                        });
+                    }
+                } catch (e) { console.warn("Failed to sync public path", e); }
 
                 if (!updateRes.ok) throw new Error("Erro ao salvar no GitHub.");
                 return { success: true, timestamp: now };
