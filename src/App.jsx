@@ -180,20 +180,22 @@ export default function App() {
           }
 
           if (newTimestamp !== lastKnownTimestampRef.current) {
-            addLog(`[TRIGGER] Mudança de timestamp detectada! (${lastKnownTimestampRef.current} -> ${newTimestamp})`);
+            addLog(`[TRIGGER] Mudança detectada: ${newTimestamp}`);
             lastKnownTimestampRef.current = newTimestamp;
 
             setTimeout(() => {
-              const url = new URL(window.location.href);
-              url.searchParams.set('reloaded', Date.now());
-              addLog(`[RELOAD] Executando replace...`);
-              window.location.replace(url.toString());
+              // Força o Cloudflare a servir o index.html novo ignorando qualquer cache do navegador
+              const newUrl = window.location.origin + window.location.pathname +
+                '?v=' + newTimestamp + '&t=' + Date.now();
 
-              setTimeout(() => {
-                addLog(`[RELOAD] Fallback: Forçando via href.`);
-                window.location.href = url.toString();
-              }, 1500);
-              setTimeout(() => { window.location.reload(); }, 4000);
+              addLog(`[RELOAD] Redirecionando para: ${newUrl}`);
+
+              // Tenta substituir o histórico para evitar que o "voltar" quebre
+              window.location.replace(newUrl);
+
+              // Fallback se o replace falhar ou demorar
+              setTimeout(() => { window.location.href = newUrl; }, 1000);
+              setTimeout(() => { window.location.reload(true); }, 3000);
             }, 1000);
           } else {
             // Add periodic log only every 3 checks to avoid spamming

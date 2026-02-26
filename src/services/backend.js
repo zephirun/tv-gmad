@@ -38,9 +38,8 @@ export const backend = {
                     import.meta.env.VITE_GITHUB_TOKEN;
 
                 try {
-                    const headers = {
-                        'Accept': 'application/vnd.github.v3+json'
-                    };
+                    // Removendo Accept para evitar preflight em TVs antigas
+                    const headers = {};
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
                     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
@@ -52,9 +51,17 @@ export const backend = {
                         if (fileData.content) {
                             const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
                             const binString = atob(cleanBase64);
-                            const bytes = new Uint8Array(binString.length);
-                            for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
-                            const decoded = new TextDecoder().decode(bytes);
+
+                            // Decoder universal compatível com TVs antigas (sem TextDecoder)
+                            let decoded;
+                            try {
+                                decoded = decodeURIComponent(escape(binString));
+                            } catch (e) {
+                                // Fallback se o escape falhar
+                                const bytes = new Uint8Array(binString.length);
+                                for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
+                                decoded = new TextDecoder().decode(bytes);
+                            }
 
                             const allData = JSON.parse(decoded);
                             const sourcePrefix = GITHUB_TOKEN ? "API_AUTH" : "API_ANON";
