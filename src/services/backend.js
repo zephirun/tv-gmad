@@ -166,9 +166,12 @@ export const backend = {
                     throw new Error("Não foi possível obter o conteúdo do GitHub para edição. Tente recarregar a página.");
                 }
 
-                // Decodificar conteúdo (Base64 -> UTF-8 -> JSON) - Limpando quebras de linha que o GitHub envia
+                // Decodificar conteúdo (Base64 -> UTF-8 -> JSON)
                 const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
-                const currentContent = decodeURIComponent(escape(atob(cleanBase64)));
+                const binString = atob(cleanBase64);
+                const bytes = new Uint8Array(binString.length);
+                for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
+                const currentContent = new TextDecoder().decode(bytes);
                 const allData = JSON.parse(currentContent);
 
                 // 2. Atualizar localmente no objeto
@@ -183,6 +186,10 @@ export const backend = {
                 }
 
                 // 4. Enviar atualização
+                const jsonString = JSON.stringify(allData, null, 2);
+                const utf8Bytes = new TextEncoder().encode(jsonString);
+                const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
                 const updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
                     method: 'PUT',
                     headers: {
@@ -191,7 +198,7 @@ export const backend = {
                     },
                     body: JSON.stringify({
                         message: `Update ${collection} ${docId} via Admin Panel`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
+                        content: base64Content,
                         sha: fileData.sha
                     })
                 });
