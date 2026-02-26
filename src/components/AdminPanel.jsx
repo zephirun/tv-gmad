@@ -23,6 +23,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const [isUploading, setIsUploading] = useState(false);
     const [isPurging, setIsPurging] = useState(false);
     const [activeTab, setActiveTab] = useState('playlist');
+    const [useManualPath, setUseManualPath] = useState(false);
     const [itemsToDelete, setItemsToDelete] = useState([]);
     const [githubToken, setGithubToken] = useState(localStorage.getItem('gmad_github_token_v3') || '');
 
@@ -605,6 +606,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                     <option value="image">Imagem Estática</option>
                                                     <option value="video">Vídeo Local (MP4)</option>
                                                     <option value="youtube">Vídeo do YouTube</option>
+                                                    <option value="news_joinville">Feed de Notícias</option>
                                                 </select>
                                             </div>
                                             <div>
@@ -634,7 +636,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                         >
                                             {newItem.type === 'youtube' ? (
                                                 <div style={{ textAlign: 'left' }}>
-                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Link do Vídeo (Compilado ou Shorts)</label>
+                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Link do Vídeo (Youtube ou Shorts)</label>
                                                     <input
                                                         type="text"
                                                         style={s.input}
@@ -642,11 +644,28 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                         value={newItem.src}
                                                         onChange={e => setNewItem({ ...newItem, src: e.target.value })}
                                                     />
-                                                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/...</p>
+                                                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: https://www.youtube.com/watch?v=...</p>
                                                 </div>
                                             ) : (
                                                 <>
-                                                    {!newItem.src && !isUploading ? (
+                                                    {useManualPath ? (
+                                                        <div style={{ textAlign: 'left' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Caminho do Arquivo (Local)</label>
+                                                                <button type="button" onClick={() => setUseManualPath(false)} style={{ border: 'none', background: 'none', color: '#3b82f6', fontSize: '11px', cursor: 'pointer', fontWeight: '600' }}>Voltar para Upload</button>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                style={s.input}
+                                                                placeholder={newItem.type === 'image' ? "/madville/imagem.jpg" : "/madville/video.mp4"}
+                                                                value={newItem.src}
+                                                                onChange={e => setNewItem({ ...newItem, src: e.target.value })}
+                                                            />
+                                                            <p style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>
+                                                                Use caminhos que começam com <b>/madville/</b> ou <b>/curitiba/</b> conforme a pasta public.
+                                                            </p>
+                                                        </div>
+                                                    ) : !newItem.src && !isUploading ? (
                                                         <label style={{ cursor: 'pointer', display: 'block' }}>
                                                             <div style={{ marginBottom: '16px', color: '#f97316', display: 'flex', justifyContent: 'center' }}>
                                                                 <FileImage size={48} strokeWidth={1.5} />
@@ -654,6 +673,10 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                             <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '15px' }}>Clique ou arraste para enviar</div>
                                                             <div style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}>Suporta JPG, PNG e MP4</div>
                                                             <input type="file" style={{ display: 'none' }} accept={newItem.type === 'image' ? "image/*" : "video/*"} onChange={handleFileUpload} />
+
+                                                            <button type="button" onClick={(e) => { e.preventDefault(); setUseManualPath(true); }} style={{ marginTop: '16px', border: 'none', background: 'none', color: '#3b82f6', fontSize: '12px', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline' }}>
+                                                                ou digite o nome do arquivo manualmente
+                                                            </button>
                                                         </label>
                                                     ) : isUploading ? (
                                                         <div>
@@ -666,7 +689,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                                                 {newItem.type === 'image' ? <img src={newItem.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ backgroundColor: '#020617', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FileVideo size={20} color="#f97316" /></div>}
                                                             </div>
                                                             <div style={{ textAlign: 'left' }}>
-                                                                <div style={{ fontWeight: '700', color: '#f97316' }}>Upload Concluído!</div>
+                                                                <div style={{ fontWeight: '700', color: '#f97316' }}>Mídia Selecionada!</div>
                                                                 <button type="button" onClick={() => setNewItem({ ...newItem, src: '' })} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', padding: 0, marginTop: '4px' }}>Substituir Arquivo</button>
                                                             </div>
                                                         </div>
