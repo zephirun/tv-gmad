@@ -21,7 +21,9 @@ export const backend = {
     db: {
         // BUSCA HÍBRIDA (GITHUB PARA VERCEL / API LOCAL PARA DESKTOP)
         getDoc: async (collection, docId) => {
-            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
+            const isRemote = window.location.hostname !== 'localhost' &&
+                window.location.hostname !== '127.0.0.1' &&
+                !window.location.hostname.startsWith('192.168.');
 
             if (isRemote) {
                 const REPO = 'zephirun/tv-gmad';
@@ -35,10 +37,12 @@ export const backend = {
                     localStorage.getItem('gmad_github_token') ||
                     import.meta.env.VITE_GITHUB_TOKEN;
 
-                // 1. TENTATIVA VIA API OFICIAL
                 try {
                     const headers = {
-                        'Accept': 'application/vnd.github.v3+json'
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
@@ -72,7 +76,9 @@ export const backend = {
 
                 // 2. FALLBACK 1: JSDELIVR
                 try {
-                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`);
+                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`, {
+                        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+                    });
                     if (jsDelivrRes.ok) {
                         const allData = await jsDelivrRes.json();
                         return {
@@ -87,7 +93,9 @@ export const backend = {
 
                 // 3. FALLBACK 2: GITHUB RAW
                 try {
-                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`);
+                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
+                        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+                    });
                     if (rawRes.ok) {
                         const allData = await rawRes.json();
                         return {
@@ -124,7 +132,9 @@ export const backend = {
 
         // SALVAMENTO MÚLTIPLO ATÔMICO (GITHUB)
         setDocsBatch: async (collection, docsMap) => {
-            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
+            const isRemote = window.location.hostname !== 'localhost' &&
+                window.location.hostname !== '127.0.0.1' &&
+                !window.location.hostname.startsWith('192.168.');
 
             // Injeta o sinal de recarga automaticamente se estivermos salvando settings ou se for um save geral
             const now = Date.now();
