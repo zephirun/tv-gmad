@@ -64,31 +64,53 @@ export const backend = {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
 
             if (isRemote) {
+                const REPO = 'zephirun/tv-gmad';
+                const FILE_PATH = 'src/data/local_cities.json';
+                const cacheBuster = `t=${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                // 1. TENTATIVA VIA API OFICIAL (Com Token se disponível)
                 try {
                     const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
-                    const REPO = 'zephirun/tv-gmad';
-                    const FILE_PATH = 'src/data/local_cities.json';
-
-                    // Usamos o padrão base64 para evitar confusão de cache com o setDoc
-                    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+                    const headers = {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
-                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
+                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
                         headers
                     });
-                    if (!res.ok) throw new Error(`GitHub fetch failed (${res.status})`);
 
-                    const fileData = await res.json();
-                    if (!fileData.content) throw new Error("GitHub metadata missing content");
-
-                    // Decodificar Base64
-                    const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
-                    const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
-
-                    console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados carregados e decodificados do GitHub.`);
-                    return (allData[collection] && allData[collection][docId]) || null;
+                    if (res.ok) {
+                        const fileData = await res.json();
+                        if (fileData.content) {
+                            const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
+                            const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
+                            return (allData[collection] && allData[collection][docId]) || null;
+                        }
+                    } else if (res.status === 403) {
+                        console.warn("[BACKEND] GitHub API Throttled (403). Tentando modo RAW...");
+                    }
                 } catch (e) {
-                    console.warn("[BACKEND] getDoc dinâmico falhou:", e.message);
+                    console.warn("[BACKEND] getDoc API falhou, tentando RAW:", e.message);
+                }
+
+                // 2. FALLBACK VIA GITHUB RAW (Sem Rate Limit rigoroso para leitura pública)
+                try {
+                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    if (rawRes.ok) {
+                        const allData = await rawRes.json();
+                        console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados via RAW carregados.`);
+                        return (allData[collection] && allData[collection][docId]) || null;
+                    }
+                } catch (e) {
+                    console.error("[BACKEND] Fallback RAW também falhou:", e.message);
                 }
             }
 

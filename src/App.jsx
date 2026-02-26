@@ -127,14 +127,17 @@ export default function App() {
   // Verifica periodicamente se houve um comando de recarregamento forçado no painel
   useEffect(() => {
     // Captura o timestamp inicial dos settings passados via prop (se houver)
-    let lastKnownTimestamp = settings?.system_reload_timestamp || null;
+    let lastKnownTimestamp = settings?.system_reload_timestamp ? Number(settings.system_reload_timestamp) : null;
+    let failCount = 0;
 
     const checkUpdates = async () => {
       try {
         // Busca o documento de settings mais atualizado
         const sDoc = await backend.db.getDoc(cityKey, 'settings');
+
         if (sDoc && sDoc.system_reload_timestamp) {
           const newTimestamp = Number(sDoc.system_reload_timestamp);
+          failCount = 0; // Reset ao ter sucesso
 
           // Se for a primeira vez que pegamos o timestamp (e não veio via props)
           if (lastKnownTimestamp === null) {
@@ -143,16 +146,22 @@ export default function App() {
             return;
           }
 
-          // Se o timestamp mudou, forçamos o reload
+          // Se o timestamp for maior que o último conhecido, forçamos o reload
           if (newTimestamp > lastKnownTimestamp) {
             console.log(`[APP] Comando de recarga detectado! (${lastKnownTimestamp} -> ${newTimestamp})`);
-            window.location.reload();
+
+            // Em WebOS e alguns navegadores de TV, reload() pode ser ignorado ou carregar do cache.
+            // replace() com cache-buster é mais agressivo.
+            const url = new URL(window.location.href);
+            url.searchParams.set('reloaded', Date.now());
+            window.location.replace(url.toString());
           }
 
           lastKnownTimestamp = newTimestamp;
         }
       } catch (err) {
-        console.warn("[APP] Erro silencioso ao verificar atualizações:", err);
+        failCount++;
+        console.warn(`[APP] Falha ao verificar atualizações (${failCount}):`, err.message);
       }
     };
 
