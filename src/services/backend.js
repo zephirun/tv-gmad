@@ -39,10 +39,7 @@ export const backend = {
 
                 try {
                     const headers = {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Accept': 'application/vnd.github.v3+json'
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
@@ -76,9 +73,7 @@ export const backend = {
 
                 // 2. FALLBACK 1: JSDELIVR
                 try {
-                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`, {
-                        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
-                    });
+                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`);
                     if (jsDelivrRes.ok) {
                         const allData = await jsDelivrRes.json();
                         return {
@@ -93,9 +88,7 @@ export const backend = {
 
                 // 3. FALLBACK 2: GITHUB RAW
                 try {
-                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
-                        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
-                    });
+                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`);
                     if (rawRes.ok) {
                         const allData = await rawRes.json();
                         return {
