@@ -28,93 +28,48 @@ export const backend = {
             if (isRemote) {
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
-
-                // Cache buster ultra agressivo
-                const cacheBuster = `cb=${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-                // Prioridade: LocalStorage -> Env Var (Cloudflare/Vercel)
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
                     localStorage.getItem('gmad_github_token') ||
                     import.meta.env.VITE_GITHUB_TOKEN;
 
-                // 1. TENTATIVA MESMA ORIGEM (Sempre funciona em TVs se o app carregou e ignora rate limits)
-                try {
-                    const sameOriginRes = await fetch(`/data/local_cities.json?${cacheBuster}`);
-                    if (sameOriginRes.ok) {
-                        const allData = await sameOriginRes.json();
-                        return {
-                            data: (allData[collection] && allData[collection][docId]) || null,
-                            source: "SAME_ORIGIN",
-                            hasToken: !!GITHUB_TOKEN
-                        };
-                    }
-                } catch (e) {
-                    console.warn("[BACKEND] Fallback SAME_ORIGIN falhou:", e.name, e.message);
-                }
-
-                // 2. TENTATIVA VIA API OFICIAL (INSTANTÂNEO SE TIVER TOKEN)
-                try {
-                    // Removendo Accept para evitar preflight em TVs antigas
-                    const headers = {};
-                    if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
-
-                    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
-                        headers
-                    });
-
-                    if (res.ok) {
-                        const fileData = await res.json();
-                        if (fileData.content) {
-                            const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
-                            const binString = atob(cleanBase64);
-
-                            // Decoder universal compatível com TVs antigas (sem TextDecoder)
-                            let decoded;
-                            try {
-                                decoded = decodeURIComponent(escape(binString));
-                            } catch (e) {
-                                // Fallback se o escape falhar
-                                const bytes = new Uint8Array(binString.length);
-                                for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
-                                decoded = new TextDecoder().decode(bytes);
-                            }
-
-                            const allData = JSON.parse(decoded);
-                            const sourcePrefix = GITHUB_TOKEN ? "API_AUTH" : "API_ANON";
-                            return {
-                                data: (allData[collection] && allData[collection][docId]) || null,
-                                source: sourcePrefix,
-                                hasToken: !!GITHUB_TOKEN
-                            };
-                        }
-                    }
-                } catch (e) {
-                    console.warn("[BACKEND] Erro na API GitHub:", e.name, e.message);
-                }
-
-                // 3. FALLBACKS EXTERNOS (JSDELIVR / GITHUB RAW)
-                const fallbacks = [
-                    `https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`,
-                    `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`
+                // Lista de fontes em ordem de prioridade
+                const sources = [
+                    { name: 'SAME_ORIGIN', url: `/data/local_cities.json?cb=${Date.now()}` },
+                    { name: 'GITHUB_API', url: `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?cb=${Date.now()}`, needsDecode: true },
+                    { name: 'GITHUB_RAW', url: `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?cb=${Date.now()}` }
                 ];
 
-                for (const url of fallbacks) {
+                for (const src of sources) {
                     try {
-                        const fbRes = await fetch(url);
-                        if (fbRes.ok) {
-                            const allData = await fbRes.json();
+                        const headers = {};
+                        if (src.needsDecode && GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+
+                        const res = await fetch(src.url, { headers });
+                        if (res.ok) {
+                            const rawData = await res.json();
+                            let parsed = rawData;
+
+                            if (src.needsDecode && rawData.content) {
+                                const bin = atob(rawData.content.replace(/\s/g, ''));
+                                try {
+                                    parsed = JSON.parse(decodeURIComponent(escape(bin)));
+                                } catch (e) {
+                                    parsed = JSON.parse(bin);
+                                }
+                            }
+
                             return {
-                                data: (allData[collection] && allData[collection][docId]) || null,
-                                source: url.includes('jsdelivr') ? "JSDELIVR" : "GITHUB_RAW",
+                                data: (parsed[collection] && parsed[collection][docId]) || null,
+                                source: src.name,
                                 hasToken: !!GITHUB_TOKEN
                             };
                         }
                     } catch (e) {
-                        console.warn(`[BACKEND] Fallback ${url} falhou:`, e.name, e.message);
+                        console.warn(`[BACKEND] Fonte ${src.name} falhou:`, e.message);
                     }
                 }
 
-                throw new Error("Falha total na busca de dados remotos.");
+                throw new Error("Nenhuma fonte de dados respondeu.");
             }
 
             // Fallback LOCAL (Desktop)
