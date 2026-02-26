@@ -325,5 +325,28 @@ export const backend = {
             console.warn("Delete local file not implemented yet:", url);
             return { success: true };
         }
+    },
+
+    // Cloudflare Integration
+    cloudflare: {
+        purgeCache: async (zoneId, apiToken) => {
+            if (!zoneId || !apiToken) throw new Error("Cloudflare Zone ID ou API Token não configurados.");
+
+            const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ purge_everything: true })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(`Erro Cloudflare (${res.status}): ${errorData.errors?.[0]?.message || 'Falha ao limpar cache'}`);
+            }
+
+            return await res.json();
+        }
     }
 };

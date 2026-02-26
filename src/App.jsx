@@ -123,6 +123,34 @@ export default function App() {
     return () => clearInterval(interval);
   }, [settings?.weatherCity]);
 
+  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS
+  // Verifica periodicamente se houve um comando de recarregamento forçado no painel
+  useEffect(() => {
+    let lastKnownTimestamp = settings?.system_reload_timestamp || null;
+
+    const checkUpdates = async () => {
+      try {
+        const sDoc = await backend.db.getDoc(cityKey, 'settings');
+        if (sDoc && sDoc.system_reload_timestamp) {
+          const newTimestamp = sDoc.system_reload_timestamp;
+
+          // Se o timestamp mudou desde o load inicial, recarrega a página
+          if (lastKnownTimestamp !== null && newTimestamp !== lastKnownTimestamp) {
+            console.log("[APP] Nova atualização detectada! Recarregando sistema...");
+            window.location.reload();
+          }
+          lastKnownTimestamp = newTimestamp;
+        }
+      } catch (err) {
+        console.warn("[APP] Erro silent ao verificar atualizações remotas:", err);
+      }
+    };
+
+    // Verifica a cada 2 minutos
+    const interval = setInterval(checkUpdates, 120000);
+    return () => clearInterval(interval);
+  }, [cityKey, settings?.system_reload_timestamp]);
+
   const next = useCallback(() => {
     if (playlist.length <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % playlist.length);

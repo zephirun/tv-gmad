@@ -21,6 +21,7 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     const [errorMsg, setErrorMsg] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isPurging, setIsPurging] = useState(false);
     const [activeTab, setActiveTab] = useState('playlist');
     const [itemsToDelete, setItemsToDelete] = useState([]);
     const [githubToken, setGithubToken] = useState(localStorage.getItem('gmad_github_token_v3') || '');
@@ -375,6 +376,29 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         if (newIndex < 0 || newIndex >= newPlaylist.length) return;
         [newPlaylist[index], newPlaylist[newIndex]] = [newPlaylist[newIndex], newPlaylist[index]];
         setPlaylist(newPlaylist);
+    };
+
+    const handleCloudflarePurge = async () => {
+        if (!editSettings.cfZoneId || !editSettings.cfApiToken) {
+            alert("Configure Zone ID e API Token nas configurações abaixo.");
+            return;
+        }
+
+        if (!window.confirm("Isso limpará TODO o cache do Cloudflare. As TVs podem levar até 2 min para recarregar. Continuar?")) return;
+
+        setIsPurging(true);
+        try {
+            // Agenda reload remoto também
+            const newUpdate = Date.now();
+            setEditSettings({ ...editSettings, system_reload_timestamp: newUpdate });
+
+            await backend.cloudflare.purgeCache(editSettings.cfZoneId, editSettings.cfApiToken);
+            alert("Cache Cloudflare solicitado com sucesso! TVs serão recarregadas em breve.");
+        } catch (error) {
+            alert("Erro Cloudflare: " + error.message);
+        } finally {
+            setIsPurging(false);
+        }
     };
 
     const handleImportFromMain = async () => {
@@ -931,29 +955,44 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                 <div style={s.card}>
                                     <div style={s.sectionTitle}>
                                         <div style={{ padding: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '10px' }}>
-                                            <Loader2 size={20} />
+                                            <Settings size={20} />
                                         </div>
-                                        <span>Atualização Remota</span>
+                                        <span>Cloudflare Cache & Atualização</span>
                                     </div>
                                     <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
-                                        Se as TVs não estiverem atualizando o conteúdo novo, use este botão para forçar o recarregamento em todos os aparelhos conectados.
+                                        Force o Cloudflare a servir os arquivos mais novos e ordene que todas as TVs se recarreguem.
                                     </p>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Cloudflare Zone ID</label>
+                                            <input type="text" style={s.input} value={editSettings.cfZoneId || ''} onChange={e => setEditSettings({ ...editSettings, cfZoneId: e.target.value })} placeholder="ID da zona do domínio" />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Cloudflare API Token</label>
+                                            <input type="password" style={s.input} value={editSettings.cfApiToken || ''} onChange={e => setEditSettings({ ...editSettings, cfApiToken: e.target.value })} placeholder="Token com permissão de Cache" />
+                                        </div>
+                                    </div>
+
                                     <button
                                         type="button"
-                                        onClick={() => setEditSettings({ ...editSettings, system_reload_timestamp: Date.now() })}
+                                        onClick={handleCloudflarePurge}
+                                        disabled={isPurging}
                                         style={{
                                             ...s.btnAction,
-                                            backgroundColor: '#3b82f6',
+                                            backgroundColor: isPurging ? '#94a3b8' : '#3b82f6',
                                             width: '100%',
                                             justifyContent: 'center',
                                             boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)'
                                         }}
                                     >
-                                        <Loader2 size={18} /> Forçar Atualização em Todas as TVs
+                                        {isPurging ? <Loader2 className="animate-spin" size={18} /> : <Loader2 size={18} />}
+                                        {isPurging ? 'Limpando Cache...' : 'LIMPAR CLOUDFLARE E RECARREGAR TVs'}
                                     </button>
-                                    {editSettings.system_reload_timestamp && (
-                                        <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '11px', color: '#94a3b8' }}>
-                                            Comando agendado para o próximo salvamento.
+
+                                    {(editSettings.system_reload_timestamp || isPurging) && (
+                                        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: '600' }}>
+                                            {isPurging ? 'Comunicando com Cloudflare...' : '✅ Agendado: TVs recarregarão no próximo ciclo (2 min).'}
                                         </div>
                                     )}
                                 </div>
