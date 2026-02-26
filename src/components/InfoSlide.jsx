@@ -124,7 +124,7 @@ export default function InfoSlide({ weather, settings }) {
                 <div style={{
                     display: 'flex', alignItems: 'center',
                     color: 'rgba(134, 239, 172, 0.7)',
-                    fontSize: '0.85rem', textTransform: 'uppercase',
+                    fontSize: '1.2rem', textTransform: 'uppercase',
                     fontWeight: 700, letterSpacing: '0.15em',
                     position: 'relative', zIndex: 10
                 }}>
@@ -148,7 +148,7 @@ export default function InfoSlide({ weather, settings }) {
                         </span>
                         <p style={{
                             color: '#E35205', fontWeight: 600,
-                            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+                            fontSize: 'clamp(1.5rem, 2.5vw, 1.8rem)',
                             textTransform: 'capitalize', marginTop: '0.5rem'
                         }}>
                             {weather.condition}
@@ -214,18 +214,18 @@ export default function InfoSlide({ weather, settings }) {
                             <Instagram size={20} style={{ color: 'white' }} />
                         </div>
                         <span style={{
-                            fontSize: '0.85rem', fontWeight: 700,
+                            fontSize: '1.1rem', fontWeight: 700,
                             textTransform: 'uppercase', letterSpacing: '0.1em',
                             color: '#6b7280'
                         }}>Siga-nos</span>
                     </div>
                     <p style={{
-                        fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+                        fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
                         fontWeight: 800, color: '#275D38',
                         marginBottom: '0.25rem', lineHeight: 1.2
                     }}>{currentInsta.user}</p>
                     <p style={{
-                        fontSize: 'clamp(0.8rem, 1.2vw, 1rem)',
+                        fontSize: 'clamp(1rem, 1.5vw, 1.1rem)',
                         color: '#6b7280', fontWeight: 500
                     }}>
                         Escaneie o QR Code para seguir
@@ -259,24 +259,24 @@ export default function InfoSlide({ weather, settings }) {
                     }}>
                         <Wifi style={{ width: '24px', height: '24px', marginRight: '12px' }} />
                         <span style={{
-                            fontSize: '0.85rem', fontWeight: 700,
+                            fontSize: '1.1rem', fontWeight: 700,
                             textTransform: 'uppercase', letterSpacing: '0.15em'
                         }}>Wi-Fi Gratuito</span>
                     </div>
                     <div>
                         <p style={{
                             color: 'rgba(255, 255, 255, 0.6)',
-                            fontSize: '0.75rem', textTransform: 'uppercase',
+                            fontSize: '1rem', textTransform: 'uppercase',
                             fontWeight: 700, marginBottom: '0.5rem'
                         }}>Rede</p>
                         <p style={{
-                            fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+                            fontSize: 'clamp(2rem, 3vw, 2.5rem)',
                             fontWeight: 700, color: 'white', lineHeight: 1.2
                         }}>
                             {settings?.wifiSsid || 'GMAD Madville'}
                         </p>
                         <p style={{
-                            fontSize: 'clamp(1.2rem, 2.5vw, 2rem)',
+                            fontSize: 'clamp(2rem, 2.5vw, 2rem)',
                             fontWeight: 700, color: 'white',
                             marginTop: '0.25rem'
                         }}>
