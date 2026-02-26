@@ -379,21 +379,24 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
     };
 
     const handleCloudflarePurge = async () => {
-        if (!editSettings.cfZoneId || !editSettings.cfApiToken) {
-            alert("Configure Zone ID e API Token nas configurações abaixo.");
-            return;
-        }
+        const hasCloudflare = editSettings.cfZoneId && editSettings.cfApiToken;
 
-        if (!window.confirm("Isso limpará TODO o cache do Cloudflare. As TVs podem levar até 2 min para recarregar. Continuar?")) return;
+        if (!window.confirm(hasCloudflare
+            ? "Isso limpará o cache do Cloudflare e recarregará as TVs. Continuar?"
+            : "Isso enviará um comando para todas as TVs se recarregarem (sem limpar cache do Cloudflare). Continuar?")) return;
 
         setIsPurging(true);
         try {
-            // Agenda reload remoto também
+            // Agenda reload remoto sempre
             const newUpdate = Date.now();
             setEditSettings({ ...editSettings, system_reload_timestamp: newUpdate });
 
-            await backend.cloudflare.purgeCache(editSettings.cfZoneId, editSettings.cfApiToken);
-            alert("Cache Cloudflare solicitado com sucesso! TVs serão recarregadas em breve.");
+            if (hasCloudflare) {
+                await backend.cloudflare.purgeCache(editSettings.cfZoneId, editSettings.cfApiToken);
+                alert("Cache Cloudflare solicitado e comando de recarregamento enviado!");
+            } else {
+                alert("Comando de recarregamento agendado! Clique em 'Publicar na TV' para confirmar.");
+            }
         } catch (error) {
             alert("Erro Cloudflare: " + error.message);
         } finally {
