@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Wifi, Instagram } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { CITY_CONFIG, getWeatherDescription } from '../constants';
+import { LOGO_URL, CITY_CONFIG, getWeatherDescription } from '../constants';
 
 /**
  * InfoSlide – Slide de informações em tela cheia para o carrossel da TV.
@@ -17,9 +17,15 @@ const Clock = () => {
     }, []);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem' }}>
+            <img
+                src={LOGO_URL}
+                alt="GMAD"
+                style={{ maxWidth: '200px', maxHeight: '70px', objectFit: 'contain' }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+            />
             <div style={{
-                fontSize: 'clamp(5rem, 12vw, 10rem)',
+                fontSize: 'clamp(4rem, 9vw, 7rem)',
                 lineHeight: 1,
                 fontWeight: 200,
                 color: '#275D38',
@@ -27,7 +33,7 @@ const Clock = () => {
                 fontFamily: 'var(--font-display)',
                 marginBottom: '0.75rem'
             }}>
-                {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
             <div style={{
                 display: 'inline-flex',
@@ -123,7 +129,7 @@ export default function InfoSlide({ weather, settings }) {
                 }}>
                     <div>
                         <span style={{
-                            fontSize: 'clamp(4rem, 10vw, 7rem)',
+                            fontSize: 'clamp(5rem, 12vw, 9rem)',
                             fontWeight: 700, color: 'white',
                             letterSpacing: '-0.03em', lineHeight: 1
                         }}>
@@ -139,8 +145,9 @@ export default function InfoSlide({ weather, settings }) {
                     </div>
                     <div style={{
                         color: 'rgba(255, 255, 255, 0.9)',
-                        transform: 'scale(3)',
-                        marginRight: '2rem'
+                        transform: 'scale(4.5)',
+                        marginRight: '2.5rem',
+                        marginTop: '-1rem'
                     }}>
                         {getWeatherDescription(weather.weatherCode || 0).icon}
                     </div>
