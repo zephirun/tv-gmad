@@ -1,7 +1,3 @@
-import { supabase } from '../supabase/client';
-
-const PROVIDER = 'LOCAL'; // Pode ser 'SUPABASE' ou 'LOCAL'
-
 /**
  * Backend Service - Abstração de dados
  * Gerencia o carregamento/salvamento via GitHub (Vercel/Remote) ou API Local (Desktop)
@@ -12,38 +8,24 @@ export const backend = {
         getDoc: async (collection, docId) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
 
-            // 0. PRIORIDADE MÁXIMA PARA SETTINGS: SUPABASE (Real-time, sem cache de CDN)
-            if (isRemote && docId === 'settings' && supabase) {
-                try {
-                    const { data, error } = await supabase
-                        .from('tv_collections')
-                        .select('settings')
-                        .eq('collection_id', collection)
-                        .maybeSingle();
-
-                    if (!error && data && data.settings) {
-                        console.log(`[BACKEND] getDoc('${collection}', 'settings') -> Sucesso via SUPABASE (Instante)`);
-                        return {
-                            data: data.settings,
-                            source: "SUPABASE_REALTIME",
-                            hasToken: !!(localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token'))
-                        };
-                    }
-                } catch (e) {
-                    console.warn("[BACKEND] Falha ao ler settings via Supabase, tentando GitHub...", e.message);
-                }
-            }
-
             if (isRemote) {
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
-                const cacheBuster = `t=${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token');
 
-                // 1. TENTATIVA VIA API OFICIAL (Com Token se disponível)
+                // Cache buster ultra agressivo com timestamp de milissegundos e número randômico
+                const cacheBuster = `t=${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                // Prioridade: LocalStorage -> Env Var (Cloudflare/Vercel)
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
+                    localStorage.getItem('gmad_github_token') ||
+                    import.meta.env.VITE_GITHUB_TOKEN;
+
+                // 1. TENTATIVA VIA API OFICIAL (Instantâneo com Token)
                 try {
                     const headers = {
                         'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
@@ -62,8 +44,7 @@ export const backend = {
                             const decoded = new TextDecoder().decode(bytes);
 
                             const allData = JSON.parse(decoded);
-                            const sourcePrefix = GITHUB_TOKEN ? "API+TOKEN" : "API+ANON";
-                            console.log(`[BACKEND] getDoc via ${sourcePrefix}`);
+                            const sourcePrefix = GITHUB_TOKEN ? "API_AUTH" : "API_ANON";
                             return {
                                 data: (allData[collection] && allData[collection][docId]) || null,
                                 source: sourcePrefix,
@@ -71,20 +52,20 @@ export const backend = {
                             };
                         }
                     } else if (res.status === 403) {
-                        console.warn("[BACKEND] GitHub API Rate Limited (403). Pulando para fallbacks...");
+                        console.warn("[BACKEND] GitHub API Rate Limited (403).");
                     }
                 } catch (e) {
                     console.warn("[BACKEND] Erro na API GitHub:", e.message);
                 }
 
-                // 2. FALLBACK 1: JSDELIVR
+                // 2. FALLBACK 1: JSDELIVR (Bypass de cache as vezes melhor que o Raw)
                 try {
                     const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`, {
-                        cache: 'no-store'
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
                     });
                     if (jsDelivrRes.ok) {
                         const allData = await jsDelivrRes.json();
-                        console.log(`[BACKEND] getDoc via JSDELIVR`);
                         return {
                             data: (allData[collection] && allData[collection][docId]) || null,
                             source: "JSDELIVR",
@@ -95,14 +76,17 @@ export const backend = {
                     console.warn("[BACKEND] Fallback JSDELIVR falhou:", e.message);
                 }
 
-                // 3. FALLBACK 2: GITHUB RAW
+                // 3. FALLBACK 2: GITHUB RAW (TTL de ~5min se o cache buster for ignorado)
                 try {
                     const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
-                        cache: 'no-store'
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        }
                     });
                     if (rawRes.ok) {
                         const allData = await rawRes.json();
-                        console.log(`[BACKEND] getDoc via GITHUB_RAW`);
                         return {
                             data: (allData[collection] && allData[collection][docId]) || null,
                             source: "GITHUB_RAW",
@@ -112,54 +96,37 @@ export const backend = {
                         throw new Error(`Status ${rawRes.status}`);
                     }
                 } catch (e) {
-                    throw new Error(`Falha total no carregamento remoto (API, JSDelivr e RAW): ${e.message}`);
+                    throw new Error(`Falha total: ${e.message}`);
                 }
             }
 
             // Fallback LOCAL (Desktop)
-            if (PROVIDER === 'LOCAL') {
-                try {
-                    const res = await fetch('/api/get-local-data', { cache: 'no-store' });
-                    const allData = await res.json();
-                    return {
-                        data: (allData[collection] && allData[collection][docId]) || null,
-                        source: "LOCAL_API"
-                    };
-                } catch (e) {
-                    console.error("Local getDoc failed:", e);
-                    return null;
-                }
+            try {
+                const res = await fetch('/api/get-local-data', { cache: 'no-store' });
+                const allData = await res.json();
+                return {
+                    data: (allData[collection] && allData[collection][docId]) || null,
+                    source: "LOCAL_API"
+                };
+            } catch (e) {
+                console.error("Local getDoc failed:", e);
+                return null;
             }
-            return null;
         },
 
         // SALVAMENTO HÍBRIDO (LOCAL + GITHUB PARA VERCEL)
         setDoc: async (collection, docId, data) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
             if (isRemote) {
-                // 1. ATUALIZAÇÃO NO SUPABASE (Sinalização Instantânea)
-                // Se for settings, salvamos aqui para que todas as TVs recebam o sinal na hora
-                if (supabase) {
-                    try {
-                        console.log(`[BACKEND] Propagando '${docId}' via Supabase...`);
-                        const { error } = await supabase
-                            .from('tv_collections')
-                            .upsert({
-                                collection_id: collection,
-                                [docId]: data
-                            });
-                        if (error) console.warn("[BACKEND] Erro ao sincronizar com Supabase:", error.message);
-                    } catch (e) {
-                        console.warn("[BACKEND] Supabase falhou:", e.message);
-                    }
-                }
+                console.log("[BACKEND] Salvando no GitHub...");
+                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
+                    localStorage.getItem('gmad_github_token') ||
+                    import.meta.env.VITE_GITHUB_TOKEN;
 
-                console.log("[BACKEND] Salvando persistência via GitHub API...");
-                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token');
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
-                if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado.");
+                if (!GITHUB_TOKEN) throw new Error("Token não disponível (LocalStorage ou Env Var).");
 
                 const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` },
@@ -168,7 +135,7 @@ export const backend = {
 
                 if (!getFileRes.ok) {
                     const errorData = await getFileRes.json().catch(() => ({}));
-                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message}`);
+                    throw new Error(`GitHub Error: ${errorData.message}`);
                 }
 
                 const fileData = await getFileRes.json();
@@ -199,7 +166,7 @@ export const backend = {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: `Update ${collection} ${docId} via Admin Panel`,
+                        message: `Update ${collection} ${docId}`,
                         content: base64Content,
                         sha: fileData.sha
                     })
@@ -209,14 +176,12 @@ export const backend = {
                 return { success: true };
             }
 
-            if (PROVIDER === 'LOCAL') {
-                const response = await fetch('/api/save-city-data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ collectionId: collection, docId, data })
-                });
-                return response.json();
-            }
+            const response = await fetch('/api/save-city-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collectionId: collection, docId, data })
+            });
+            return response.json();
         }
     },
 
