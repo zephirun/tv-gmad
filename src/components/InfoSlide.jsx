@@ -21,7 +21,13 @@ const Clock = () => {
             <img
                 src={LOGO_URL}
                 alt="GMAD"
-                style={{ maxWidth: '200px', maxHeight: '70px', objectFit: 'contain' }}
+                style={{
+                    maxWidth: '200px', maxHeight: '70px',
+                    objectFit: 'contain',
+                    display: 'block',
+                    marginTop: '24px',
+                    marginBottom: '16px'
+                }}
                 onError={(e) => { e.target.style.display = 'none'; }}
             />
             <div style={{
@@ -30,21 +36,22 @@ const Clock = () => {
                 fontWeight: 200,
                 color: '#275D38',
                 letterSpacing: '-0.03em',
-                fontFamily: 'var(--font-display)'
+                fontFamily: 'var(--font-display)',
+                marginBottom: '12px'
             }}>
                 {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
             <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.5rem',
                 backgroundColor: '#E35205',
                 color: 'white',
                 padding: '0.6rem 1.5rem',
                 borderRadius: '9999px',
                 fontSize: 'clamp(0.9rem, 1.5vw, 1.2rem)',
                 fontWeight: 500,
-                textTransform: 'capitalize'
+                textTransform: 'capitalize',
+                marginTop: '8px'
             }}>
                 {dateTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </div>
@@ -87,7 +94,6 @@ export default function InfoSlide({ weather, settings }) {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '1.5rem',
                 padding: '2.5rem',
                 paddingTop: '2rem'
             }}>
@@ -168,20 +174,24 @@ export default function InfoSlide({ weather, settings }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2rem',
-                padding: '2rem 2.5rem'
+                paddingLeft: '24px',
+                paddingRight: '24px',
+                paddingTop: '20px',
+                paddingBottom: '20px'
             }}>
                 <div style={{
                     width: '120px',
                     height: '120px',
                     borderRadius: '12px',
                     backgroundColor: '#ffffff',
-                    padding: '8px',
+                    padding: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     border: '2px solid #e5e7eb',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    marginRight: '20px',
+                    marginLeft: '8px'
                 }}>
                     <QRCodeSVG
                         value={currentInsta.url}
