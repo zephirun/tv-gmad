@@ -12,26 +12,24 @@ export const backend = {
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
-                // Cache buster ultra agressivo com timestamp de milissegundos e número randômico
-                const cacheBuster = `t=${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                // Cache buster ultra agressivo
+                const cacheBuster = `cb=${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
                 // Prioridade: LocalStorage -> Env Var (Cloudflare/Vercel)
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
                     localStorage.getItem('gmad_github_token') ||
                     import.meta.env.VITE_GITHUB_TOKEN;
 
-                // 1. TENTATIVA VIA API OFICIAL (Instantâneo com Token)
+                // 1. TENTATIVA VIA API OFICIAL
                 try {
                     const headers = {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
+                        'Accept': 'application/vnd.github.v3+json'
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
+                    // REMOVIDO: cache: 'no-store' (Causa 'Failed to fetch' em TVs antigas/WebOS)
                     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
-                        headers,
-                        cache: 'no-store'
+                        headers
                     });
 
                     if (res.ok) {
@@ -51,19 +49,16 @@ export const backend = {
                                 hasToken: !!GITHUB_TOKEN
                             };
                         }
-                    } else if (res.status === 403) {
-                        console.warn("[BACKEND] GitHub API Rate Limited (403).");
+                    } else {
+                        console.warn(`[BACKEND] API GitHub falhou: ${res.status}`);
                     }
                 } catch (e) {
-                    console.warn("[BACKEND] Erro na API GitHub:", e.message);
+                    console.warn("[BACKEND] Erro na API GitHub:", e.name, e.message);
                 }
 
-                // 2. FALLBACK 1: JSDELIVR (Bypass de cache as vezes melhor que o Raw)
+                // 2. FALLBACK 1: JSDELIVR
                 try {
-                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`, {
-                        cache: 'no-store',
-                        headers: { 'Cache-Control': 'no-cache' }
-                    });
+                    const jsDelivrRes = await fetch(`https://cdn.jsdelivr.net/gh/${REPO}@main/${FILE_PATH}?${cacheBuster}`);
                     if (jsDelivrRes.ok) {
                         const allData = await jsDelivrRes.json();
                         return {
@@ -73,18 +68,12 @@ export const backend = {
                         };
                     }
                 } catch (e) {
-                    console.warn("[BACKEND] Fallback JSDELIVR falhou:", e.message);
+                    console.warn("[BACKEND] Fallback JSDELIVR falhou:", e.name, e.message);
                 }
 
-                // 3. FALLBACK 2: GITHUB RAW (TTL de ~5min se o cache buster for ignorado)
+                // 3. FALLBACK 2: GITHUB RAW
                 try {
-                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
-                        cache: 'no-store',
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache'
-                        }
-                    });
+                    const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`);
                     if (rawRes.ok) {
                         const allData = await rawRes.json();
                         return {
@@ -96,13 +85,13 @@ export const backend = {
                         throw new Error(`Status ${rawRes.status}`);
                     }
                 } catch (e) {
-                    throw new Error(`Falha total: ${e.message}`);
+                    throw new Error(`Falha total fetch: ${e.name} ${e.message}`);
                 }
             }
 
             // Fallback LOCAL (Desktop)
             try {
-                const res = await fetch('/api/get-local-data', { cache: 'no-store' });
+                const res = await fetch(`/api/get-local-data?v=${Date.now()}`);
                 const allData = await res.json();
                 return {
                     data: (allData[collection] && allData[collection][docId]) || null,
@@ -114,11 +103,10 @@ export const backend = {
             }
         },
 
-        // SALVAMENTO HÍBRIDO (LOCAL + GITHUB PARA VERCEL)
+        // SALVAMENTO HÍBRIDO
         setDoc: async (collection, docId, data) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
             if (isRemote) {
-                console.log("[BACKEND] Salvando no GitHub...");
                 const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') ||
                     localStorage.getItem('gmad_github_token') ||
                     import.meta.env.VITE_GITHUB_TOKEN;
@@ -126,11 +114,10 @@ export const backend = {
                 const REPO = 'zephirun/tv-gmad';
                 const FILE_PATH = 'src/data/local_cities.json';
 
-                if (!GITHUB_TOKEN) throw new Error("Token não disponível (LocalStorage ou Env Var).");
+                if (!GITHUB_TOKEN) throw new Error("Token não disponível.");
 
                 const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` },
-                    cache: 'no-store'
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
                 });
 
                 if (!getFileRes.ok) {
@@ -182,26 +169,6 @@ export const backend = {
                 body: JSON.stringify({ collectionId: collection, docId, data })
             });
             return response.json();
-        }
-    },
-
-    cloudflare: {
-        purgeCache: async (zoneId, apiToken) => {
-            if (!zoneId || !apiToken) return;
-            try {
-                const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ purge_everything: true })
-                });
-                return res.json();
-            } catch (e) {
-                console.error("[BACKEND] Cloudflare Purge failed:", e);
-                throw e;
-            }
         }
     }
 };
