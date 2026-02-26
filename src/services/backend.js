@@ -5,8 +5,11 @@
 export const backend = {
     // MOCK AUTH PARA EVITAR ERROS NO ADMIN (SUPABASE DESATIVADO)
     auth: {
-        currentUser: () => null,
-        signInWithPassword: async () => { throw new Error("Supabase desativado. Use login legado."); }
+        currentUser: () => ({ id: 'admin', email: 'admin@gmad.com' }),
+        signInWithPassword: async () => {
+            console.log("[BACKEND] Login via mock auth");
+            return { data: { user: { id: 'admin' } }, error: null };
+        }
     },
 
     // MOCK STORAGE PARA EVITAR ERROS NO ADMIN
