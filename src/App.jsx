@@ -179,8 +179,8 @@ export default function App() {
             return;
           }
 
-          if (newTimestamp > lastKnownTimestampRef.current) {
-            addLog(`[TRIGGER] NOVO COMANDO DETECTADO! (${res.source})`);
+          if (newTimestamp !== lastKnownTimestampRef.current) {
+            addLog(`[TRIGGER] Mudança de timestamp detectada! (${lastKnownTimestampRef.current} -> ${newTimestamp})`);
             lastKnownTimestampRef.current = newTimestamp;
 
             setTimeout(() => {
