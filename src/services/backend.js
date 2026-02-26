@@ -3,6 +3,18 @@
  * Gerencia o carregamento/salvamento via GitHub (Vercel/Remote) ou API Local (Desktop)
  */
 export const backend = {
+    // MOCK AUTH PARA EVITAR ERROS NO ADMIN (SUPABASE DESATIVADO)
+    auth: {
+        currentUser: () => null,
+        signInWithPassword: async () => { throw new Error("Supabase desativado. Use login legado."); }
+    },
+
+    // MOCK STORAGE PARA EVITAR ERROS NO ADMIN
+    storage: {
+        uploadFile: async () => { throw new Error("Upload desativado (Supabase desativado)."); },
+        deleteFile: async () => { console.warn("Delete ignorado (Supabase desativado)."); }
+    },
+
     db: {
         // BUSCA HÍBRIDA (GITHUB PARA VERCEL / API LOCAL PARA DESKTOP)
         getDoc: async (collection, docId) => {
@@ -27,7 +39,6 @@ export const backend = {
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
-                    // REMOVIDO: cache: 'no-store' (Causa 'Failed to fetch' em TVs antigas/WebOS)
                     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
                         headers
                     });
