@@ -16,11 +16,18 @@ import { LOCAL_CITIES } from './data/local_cities';
 // COMPONENTE PRINCIPAL (TV)
 // ==========================================
 export default function App() {
+  // Identificação da Cidade via URL
+  const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
+  const cityKey = LOCAL_CITIES[pathSegment] ? pathSegment : 'default';
+  const cityData = LOCAL_CITIES[cityKey];
+
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [playlist, setPlaylist] = useState([]);
-  const [newsItems, setNewsItems] = useState(DEFAULT_NEWS);
+  // Usa o cityData (estático do build) como valor inicial para garantir que a TV nunca abra vazia
+  const [playlist, setPlaylist] = useState(cityData?.playlist?.items || cityData?.playlist || []);
+  const [newsItems, setNewsItems] = useState(cityData?.news?.items || cityData?.news || DEFAULT_NEWS);
+  const [settings, setSettings] = useState(cityData?.settings || {});
+
   const [user, setUser] = useState(null);
-  const [settings, setSettings] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const [weather, setWeather] = useState({ temp: '--', condition: 'Carregando...', weatherCode: 0 });
@@ -34,11 +41,6 @@ export default function App() {
   // Security
   const [isLocked, setIsLocked] = useState(false);
   const [securityPin, setSecurityPin] = useState(null);
-
-  // Identificação da Cidade via URL
-  const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
-  const cityKey = LOCAL_CITIES[pathSegment] ? pathSegment : 'default';
-  const cityData = LOCAL_CITIES[cityKey];
 
   useEffect(() => {
     // Check if current route requires auth
@@ -83,13 +85,7 @@ export default function App() {
         }
 
       } catch (err) {
-        console.warn("Falha ao carregar dados dinâmicos, usando estáticos:", err);
-        // Fallback para o que já vem no import estático se falhar
-        if (cityData) {
-          setPlaylist(cityData.playlist?.items || cityData.playlist || []);
-          setNewsItems(cityData.news?.items || cityData.news || []);
-          setSettings(cityData.settings || {});
-        }
+        console.warn("Falha ao carregar dados dinâmicos, mantendo estáticos:", err);
       } finally {
         setIsLoadingData(false);
       }

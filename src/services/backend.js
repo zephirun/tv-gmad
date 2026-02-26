@@ -87,7 +87,11 @@ export const backend = {
                         if (fileData.content) {
                             const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
                             // Decodificando Base64 para UTF-8 de forma robusta
-                            const decoded = decodeURIComponent(atob(cleanBase64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                            const binString = atob(cleanBase64);
+                            const bytes = new Uint8Array(binString.length);
+                            for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
+                            const decoded = new TextDecoder().decode(bytes);
+
                             const allData = JSON.parse(decoded);
                             return (allData[collection] && allData[collection][docId]) || null;
                         }
@@ -108,14 +112,12 @@ export const backend = {
                         const allData = await rawRes.json();
                         console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados via RAW carregados.`);
                         return (allData[collection] && allData[collection][docId]) || null;
+                    } else {
+                        throw new Error(`Fallback RAW status ${rawRes.status}`);
                     }
                 } catch (e) {
-                    console.error("[BACKEND] Fallback RAW também falhou:", e.message);
+                    throw new Error(`Falha total no carregamento remoto: ${e.message}`);
                 }
-
-                // Se chegou aqui em ambiente remoto, não queremos tentar o LOCAL do backend.js 
-                // pois ele vai bater em /api/get-local-data que costuma dar 404 HTML.
-                return null;
             }
 
             if (PROVIDER === 'LOCAL') {
