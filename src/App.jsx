@@ -92,8 +92,8 @@ export default function App() {
     const result = [];
     for (let i = 0; i < playlist.length; i++) {
       result.push(playlist[i]);
-      // Insere o InfoSlide a cada 3 itens
-      if ((i + 1) % 3 === 0) {
+      // Insere o InfoSlide a cada 2 itens
+      if ((i + 1) % 2 === 0) {
         result.push(INFO_SLIDE_ITEM);
       }
     }
