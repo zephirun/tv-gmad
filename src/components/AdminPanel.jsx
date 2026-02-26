@@ -332,14 +332,23 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         }
 
         let finalSrc = newItem.src;
+        let finalType = newItem.type;
+
+        // Auto-detectar tipo pela extensão se estiver no modo manual ou se o tipo for genérico
+        if (newItem.src.toLowerCase().match(/\.(mp4|mov|webm|ogg|m4v)$/)) {
+            finalType = 'video';
+        } else if (newItem.src.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg|avif)$/)) {
+            finalType = 'image';
+        }
 
         // Extração de ID do YouTube se for o caso
-        if (newItem.type === 'youtube') {
+        if (newItem.type === 'youtube' || newItem.src.includes('youtube.com') || newItem.src.includes('youtu.be')) {
             const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
             const match = newItem.src.match(ytRegex);
             if (match && match[1]) {
                 finalSrc = match[1];
-            } else if (newItem.src.length !== 11) {
+                finalType = 'youtube';
+            } else if (newItem.src.length !== 11 && newItem.type === 'youtube') {
                 setErrorMsg('Link do YouTube inválido!');
                 return;
             }
@@ -348,12 +357,14 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         const item = {
             ...newItem,
             src: newItem.type === 'news_joinville' ? '' : finalSrc,
+            type: finalType,
             title: newItem.type === 'news_joinville' ? 'Feed de Notícias' : newItem.title,
             id: Date.now()
         };
 
         setPlaylist([...playlist, item]);
         setNewItem({ type: 'image', src: '', title: '', subtitle: '', duration: 8000 });
+        setUseManualPath(false);
     };
 
     const handleDeleteItem = (id) => {
