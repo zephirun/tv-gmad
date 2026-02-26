@@ -15,7 +15,7 @@ import { LOCAL_CITIES } from './data/local_cities';
 // COMPONENTE PRINCIPAL (TV)
 // ==========================================
 
-const INFO_SLIDE_ITEM = { id: '__info_slide__', type: 'info', duration: 15000 };
+const INFO_SLIDE_ITEM = { id: '__info_slide__', type: 'info', duration: 30000 };
 
 export default function App() {
   // Identificação da Cidade via URL
@@ -92,8 +92,8 @@ export default function App() {
     const result = [];
     for (let i = 0; i < playlist.length; i++) {
       result.push(playlist[i]);
-      // Insere o InfoSlide a cada 5 itens
-      if ((i + 1) % 5 === 0) {
+      // Insere o InfoSlide a cada 3 itens
+      if ((i + 1) % 3 === 0) {
         result.push(INFO_SLIDE_ITEM);
       }
     }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LOGO_URL } from '../constants';
 
 export default function NewsTicker({ newsItems }) {
     const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -20,7 +21,7 @@ export default function NewsTicker({ newsItems }) {
         <div style={{
             width: '100%',
             height: '70px',
-            background: '#275D38', // Flat Color
+            background: '#275D38',
             display: 'flex',
             WebkitDisplay: 'flex',
             alignItems: 'center',
@@ -29,12 +30,11 @@ export default function NewsTicker({ newsItems }) {
             flexShrink: 0,
             WebkitFlexShrink: 0,
             zIndex: 100,
-            borderTop: '2px solid #E35205' // Separador simples
+            borderTop: '2px solid #E35205'
         }}>
-            {/* Badge INFO GMAD */}
+            {/* Logo GMAD */}
             <div style={{
-                background: '#E35205',
-                color: 'white',
+                background: '#ffffff',
                 height: '100%',
                 display: 'flex',
                 WebkitDisplay: 'flex',
@@ -45,22 +45,19 @@ export default function NewsTicker({ newsItems }) {
                 padding: '0 28px',
                 flexShrink: 0,
                 WebkitFlexShrink: 0,
-                minWidth: '160px'
+                minWidth: '180px',
+                boxShadow: '4px 0 12px rgba(0,0,0,0.15)'
             }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        marginBottom: '2px',
-                        textTransform: 'uppercase'
-                    }}>Info</div>
-                    <div style={{
-                        fontSize: '22px',
-                        fontWeight: 800,
-                        fontFamily: "var(--font-display)"
-                    }}>GMAD</div>
-                </div>
+                <img
+                    src={LOGO_URL}
+                    alt="GMAD"
+                    style={{ maxWidth: '130px', maxHeight: '42px', objectFit: 'contain' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                />
             </div>
+
+            {/* Separador laranja */}
+            <div style={{ width: '4px', height: '100%', background: '#E35205', flexShrink: 0 }} />
 
             {/* Container da Notícia (Estático) */}
             <div style={{

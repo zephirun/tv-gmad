@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Wifi, Instagram } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { LOGO_URL, CITY_CONFIG, getWeatherDescription } from '../constants';
+import { CITY_CONFIG, getWeatherDescription } from '../constants';
 
 /**
  * InfoSlide – Slide de informações em tela cheia para o carrossel da TV.
@@ -18,12 +18,6 @@ const Clock = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <img
-                src={LOGO_URL}
-                alt="GMAD"
-                style={{ maxWidth: '220px', maxHeight: '80px', objectFit: 'contain', marginBottom: '1.5rem' }}
-                onError={(e) => { e.target.style.display = 'none'; }}
-            />
             <div style={{
                 fontSize: 'clamp(5rem, 12vw, 10rem)',
                 lineHeight: 1,
