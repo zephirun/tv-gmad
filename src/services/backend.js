@@ -70,7 +70,7 @@ export const backend = {
 
                 // 1. TENTATIVA VIA API OFICIAL (Com Token se disponível)
                 try {
-                    const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
+                    const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token');
                     const headers = {
                         'Accept': 'application/vnd.github.v3+json',
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -86,17 +86,17 @@ export const backend = {
                         const fileData = await res.json();
                         if (fileData.content) {
                             const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
-                            const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
+                            // Decodificando Base64 para UTF-8 de forma robusta
+                            const decoded = decodeURIComponent(atob(cleanBase64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                            const allData = JSON.parse(decoded);
                             return (allData[collection] && allData[collection][docId]) || null;
                         }
-                    } else if (res.status === 403) {
-                        console.warn("[BACKEND] GitHub API Throttled (403). Tentando modo RAW...");
                     }
                 } catch (e) {
-                    console.warn("[BACKEND] getDoc API falhou, tentando RAW:", e.message);
+                    console.warn("[BACKEND] getDoc API falhou ou erro de parsing, tentando RAW:", e.message);
                 }
 
-                // 2. FALLBACK VIA GITHUB RAW (Sem Rate Limit rigoroso para leitura pública)
+                // 2. FALLBACK VIA GITHUB RAW
                 try {
                     const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
                         headers: {
@@ -112,6 +112,10 @@ export const backend = {
                 } catch (e) {
                     console.error("[BACKEND] Fallback RAW também falhou:", e.message);
                 }
+
+                // Se chegou aqui em ambiente remoto, não queremos tentar o LOCAL do backend.js 
+                // pois ele vai bater em /api/get-local-data que costuma dar 404 HTML.
+                return null;
             }
 
             if (PROVIDER === 'LOCAL') {

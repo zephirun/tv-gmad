@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { backend } from './services/backend';
 
 import AdminPanel from './components/AdminPanel';
@@ -27,6 +27,9 @@ export default function App() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+
+  // Armazena o último timestamp conhecido para evitar loops de reload
+  const lastKnownTimestampRef = useRef(null);
 
   // Security
   const [isLocked, setIsLocked] = useState(false);
@@ -71,7 +74,13 @@ export default function App() {
 
         if (pDoc) setPlaylist(pDoc.items || pDoc || []);
         if (nDoc) setNewsItems(nDoc.items || nDoc || []);
-        if (sDoc) setSettings(sDoc || {});
+        if (sDoc) {
+          setSettings(sDoc || {});
+          // Inicializa o timestamp se ainda não estiver definido
+          if (lastKnownTimestampRef.current === null && sDoc.system_reload_timestamp) {
+            lastKnownTimestampRef.current = Number(sDoc.system_reload_timestamp);
+          }
+        }
 
       } catch (err) {
         console.warn("Falha ao carregar dados dinâmicos, usando estáticos:", err);
@@ -124,40 +133,31 @@ export default function App() {
   }, [settings?.weatherCity]);
 
   // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS
-  // Verifica periodicamente se houve um comando de recarregamento forçado no painel
   useEffect(() => {
-    // Captura o timestamp inicial dos settings passados via prop (se houver)
-    let lastKnownTimestamp = settings?.system_reload_timestamp ? Number(settings.system_reload_timestamp) : null;
     let failCount = 0;
 
     const checkUpdates = async () => {
       try {
-        // Busca o documento de settings mais atualizado
         const sDoc = await backend.db.getDoc(cityKey, 'settings');
 
         if (sDoc && sDoc.system_reload_timestamp) {
           const newTimestamp = Number(sDoc.system_reload_timestamp);
-          failCount = 0; // Reset ao ter sucesso
+          failCount = 0;
 
-          // Se for a primeira vez que pegamos o timestamp (e não veio via props)
-          if (lastKnownTimestamp === null) {
-            lastKnownTimestamp = newTimestamp;
-            console.log("[APP] Monitoramento iniciado com timestamp:", lastKnownTimestamp);
+          if (lastKnownTimestampRef.current === null) {
+            lastKnownTimestampRef.current = newTimestamp;
+            console.log("[APP] Monitoramento iniciado com timestamp:", newTimestamp);
             return;
           }
 
-          // Se o timestamp for maior que o último conhecido, forçamos o reload
-          if (newTimestamp > lastKnownTimestamp) {
-            console.log(`[APP] Comando de recarga detectado! (${lastKnownTimestamp} -> ${newTimestamp})`);
+          if (newTimestamp > lastKnownTimestampRef.current) {
+            console.log(`[APP] Comando de recarga detectado! (${lastKnownTimestampRef.current} -> ${newTimestamp})`);
+            lastKnownTimestampRef.current = newTimestamp; // Atualiza antes de recarregar
 
-            // Em WebOS e alguns navegadores de TV, reload() pode ser ignorado ou carregar do cache.
-            // replace() com cache-buster é mais agressivo.
             const url = new URL(window.location.href);
             url.searchParams.set('reloaded', Date.now());
             window.location.replace(url.toString());
           }
-
-          lastKnownTimestamp = newTimestamp;
         }
       } catch (err) {
         failCount++;
@@ -165,10 +165,9 @@ export default function App() {
       }
     };
 
-    // Verifica a cada 60 segundos (mais reativo que 120s)
     const interval = setInterval(checkUpdates, 60000);
     return () => clearInterval(interval);
-  }, [cityKey, settings?.system_reload_timestamp]);
+  }, [cityKey]);
 
   const next = useCallback(() => {
     if (playlist.length <= 1) return;
