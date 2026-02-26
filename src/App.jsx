@@ -260,10 +260,12 @@ export default function App() {
             <div>Token: <span style={{ color: hasToken ? '#0f0' : '#f00' }}>{hasToken ? 'VALID' : 'MISSING'}</span></div>
             <div>Source: <span style={{ color: '#fff' }}>{lastSource}</span></div>
             <div>Interval: <span style={{ color: '#fff' }}>20s</span></div>
+            <div>Items: <span style={{ color: '#fff' }}>{playlist.length}</span></div>
+            <div>Index: <span style={{ color: '#fff' }}>{currentIndex}</span></div>
           </div>
           <div style={{ fontWeight: 'bold', borderBottom: '1px solid #333', marginBottom: 5 }}>ACTIVITY LOG:</div>
           {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 2, borderLeft: '2px solid #222', paddingLeft: 5 }}>{log}</div>)}
-          <div style={{ marginTop: 10, color: '#888', fontStyle: 'italic' }}>Known TS: {lastKnownTimestampRef.current}</div>
+          <div style={{ marginTop: 10, color: '#888', fontStyle: 'italic' }}>TS: {lastKnownTimestampRef.current} | v{Date.now()}</div>
         </div>
       )}
 

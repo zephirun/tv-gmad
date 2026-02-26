@@ -162,14 +162,19 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
                     playsInline
                     preload="auto"
                     onPlaying={() => {
+                        console.log("[PLAYER] Iniciando:", currentItem.src);
                         setIsLoading(false);
                         setRetryCount(0);
                     }}
-                    onEnded={() => next()}
+                    onEnded={() => {
+                        console.log("[PLAYER] Fim do vídeo:", currentItem.src);
+                        next();
+                    }}
                     onError={(e) => {
-                        console.warn('[PLAYER] Erro no vídeo:', currentItem.src, e.target.error?.code);
+                        const code = e.target.error?.code;
+                        const msg = e.target.error?.message || '';
+                        console.warn('[PLAYER] Erro no vídeo:', currentItem.src, '| Cod:', code, msg);
                         if (retryCount < 1) {
-                            // Recarrega o src de verdade (simples incremento de estado não é suficiente no WebOS)
                             setRetryCount(prev => prev + 1);
                             const vid = videoRef.current;
                             if (vid) {
