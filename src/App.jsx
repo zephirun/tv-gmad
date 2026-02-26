@@ -35,12 +35,30 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
 
+  // Debug Diagnostics
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLog, setDebugLog] = useState([]);
+
+  const addLog = (msg) => {
+    console.log(msg);
+    setDebugLog(prev => [msg, ...prev].slice(0, 20));
+  };
+
   // Armazena o último timestamp conhecido para evitar loops de reload
   const lastKnownTimestampRef = useRef(null);
 
   // Security
   const [isLocked, setIsLocked] = useState(false);
   const [securityPin, setSecurityPin] = useState(null);
+
+  useEffect(() => {
+    // Escuta tecla 'd' para abrir debug
+    const handleKey = (e) => {
+      if (e.key === 'd' || e.key === 'D') setShowDebug(prev => !prev);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   useEffect(() => {
     // Check if current route requires auth
@@ -66,6 +84,7 @@ export default function App() {
   useEffect(() => {
     const loadAppData = async () => {
       setIsLoadingData(true);
+      addLog(`[APP] Iniciando carregamento dinâmico para: ${cityKey}`);
       try {
         // Tenta buscar o dado mais fresco (especialmente útil no Admin)
         const [pDoc, nDoc, sDoc] = await Promise.all([
@@ -74,10 +93,17 @@ export default function App() {
           backend.db.getDoc(cityKey, 'settings')
         ]);
 
-        if (pDoc) setPlaylist(pDoc.items || pDoc || []);
-        if (nDoc) setNewsItems(nDoc.items || nDoc || []);
+        if (pDoc) {
+          setPlaylist(pDoc.items || pDoc || []);
+          addLog(`[APP] Playlist carregada (${pDoc.items?.length || pDoc.length} itens)`);
+        }
+        if (nDoc) {
+          setNewsItems(nDoc.items || nDoc || []);
+          addLog(`[APP] Notícias carregadas`);
+        }
         if (sDoc) {
           setSettings(sDoc || {});
+          addLog(`[APP] Configurações carregadas. Timestamp: ${sDoc.system_reload_timestamp}`);
           // Inicializa o timestamp se ainda não estiver definido
           if (lastKnownTimestampRef.current === null && sDoc.system_reload_timestamp) {
             lastKnownTimestampRef.current = Number(sDoc.system_reload_timestamp);
@@ -85,6 +111,7 @@ export default function App() {
         }
 
       } catch (err) {
+        addLog(`[APP] Falha no carregamento dinâmico: ${err.message}`);
         console.warn("Falha ao carregar dados dinâmicos, mantendo estáticos:", err);
       } finally {
         setIsLoadingData(false);
@@ -133,6 +160,7 @@ export default function App() {
     let failCount = 0;
 
     const checkUpdates = async () => {
+      addLog(`[APP] Verificando atualizações remotas...`);
       try {
         const sDoc = await backend.db.getDoc(cityKey, 'settings');
 
@@ -142,26 +170,38 @@ export default function App() {
 
           if (lastKnownTimestampRef.current === null) {
             lastKnownTimestampRef.current = newTimestamp;
-            console.log("[APP] Monitoramento iniciado com timestamp:", newTimestamp);
+            addLog(`[APP] Monitoramento iniciado com timestamp: ${newTimestamp}`);
             return;
           }
 
-          if (newTimestamp > lastKnownTimestampRef.current) {
-            console.log(`[APP] Comando de recarga detectado! (${lastKnownTimestampRef.current} -> ${newTimestamp})`);
-            lastKnownTimestampRef.current = newTimestamp; // Atualiza antes de recarregar
+          addLog(`[APP] Comparando timestamps: Atual=${newTimestamp}, Conhecido=${lastKnownTimestampRef.current}`);
 
-            const url = new URL(window.location.href);
-            url.searchParams.set('reloaded', Date.now());
-            window.location.replace(url.toString());
+          if (newTimestamp > lastKnownTimestampRef.current) {
+            addLog(`[APP] NOVO COMANDO DETECTADO! RECARREGANDO EM 3 SEGUNDOS...`);
+            lastKnownTimestampRef.current = newTimestamp;
+
+            setTimeout(() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set('reloaded', Date.now());
+              window.location.replace(url.toString());
+              // Fallback radical se o replace falhar
+              setTimeout(() => { window.location.href = url.toString(); }, 2000);
+            }, 3000);
           }
+        } else {
+          addLog(`[APP] Settings carregado mas sem timestamp de reload.`);
         }
       } catch (err) {
         failCount++;
-        console.warn(`[APP] Falha ao verificar atualizações (${failCount}):`, err.message);
+        addLog(`[APP] Falha ao verificar atualizações: ${err.message}`);
       }
     };
 
+    // Verifica a cada 60 segundos
     const interval = setInterval(checkUpdates, 60000);
+    // Executa uma vez logo após o mount (com pequeno delay para dar tempo do loadAppData)
+    setTimeout(checkUpdates, 5000);
+
     return () => clearInterval(interval);
   }, [cityKey]);
 
@@ -199,6 +239,19 @@ export default function App() {
           onClose={() => setIsAdminOpen(false)}
           settings={settings}
         />
+      )}
+
+      {showDebug && (
+        <div style={{
+          position: 'absolute', top: 50, right: 10, width: 300, maxHeight: '80vh',
+          backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid #f00', padding: 10,
+          fontSize: 10, zIndex: 9999, overflowY: 'auto', pointerEvents: 'none'
+        }}>
+          <h4 style={{ margin: '0 0 5px 0', color: '#f00' }}>TV DEBUG LOG (Press D to hide)</h4>
+          {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 4, borderBottom: '1px solid #333' }}>{log}</div>)}
+          <div style={{ marginTop: 10 }}>City: {cityKey}</div>
+          <div>Timestamp Ref: {lastKnownTimestampRef.current}</div>
+        </div>
       )}
 
       <div style={mainContentStyle}>
