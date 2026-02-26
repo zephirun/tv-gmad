@@ -394,23 +394,27 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
         const hasCloudflare = editSettings.cfZoneId && editSettings.cfApiToken;
 
         if (!window.confirm(hasCloudflare
-            ? "Isso limpará o cache do Cloudflare e recarregará as TVs. Continuar?"
-            : "Isso enviará um comando para todas as TVs se recarregarem (sem limpar cache do Cloudflare). Continuar?")) return;
+            ? "Isso limpará o cache do Cloudflare e recarregará as TVs IMEDIATAMENTE. Continuar?"
+            : "Isso enviará um comando IMEDIATO para todas as TVs se recarregarem. Continuar?")) return;
 
         setIsPurging(true);
         try {
-            // Agenda reload remoto sempre
             const newUpdate = Date.now();
-            setEditSettings({ ...editSettings, system_reload_timestamp: newUpdate });
+            // 1. Atualizar estado local
+            const updatedSettings = { ...editSettings, system_reload_timestamp: newUpdate };
+            setEditSettings(updatedSettings);
+
+            // 2. Persistir IMEDIATAMENTE no banco (sem depender do botão laranja)
+            await backend.db.setDoc(collectionId, 'settings', { system_reload_timestamp: newUpdate });
 
             if (hasCloudflare) {
                 await backend.cloudflare.purgeCache(editSettings.cfZoneId, editSettings.cfApiToken);
-                alert("Cache Cloudflare solicitado e comando de recarregamento enviado!");
+                alert("SUCESSO: Cache limpo e comando de recarga enviado via GitHub!");
             } else {
-                alert("Comando de recarregamento agendado! Clique em 'Publicar na TV' para confirmar.");
+                alert("SUCESSO: Comando de recarga enviado via GitHub! As TVs devem recarregar em até 60 segundos.");
             }
         } catch (error) {
-            alert("Erro Cloudflare: " + error.message);
+            alert("Erro ao disparar recarga: " + error.message);
         } finally {
             setIsPurging(false);
         }
@@ -1023,13 +1027,13 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)'
                                         }}
                                     >
-                                        {isPurging ? <Loader2 className="animate-spin" size={18} /> : <Loader2 size={18} />}
-                                        {isPurging ? 'Limpando Cache...' : 'LIMPAR CLOUDFLARE E RECARREGAR TVs'}
+                                        {isPurging ? <Loader2 className="animate-spin" size={18} /> : <ArrowUp size={18} />}
+                                        {isPurging ? 'Enviando Comando...' : 'FORÇAR ATUALIZAÇÃO IMEDIATA (TODAS AS TVs)'}
                                     </button>
 
-                                    {(editSettings.system_reload_timestamp || isPurging) && (
-                                        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: '600' }}>
-                                            {isPurging ? 'Comunicando com Cloudflare...' : '✅ Agendado: TVs recarregarão no próximo ciclo (2 min).'}
+                                    {(editSettings.system_reload_timestamp || isPurging) && !isPurging && (
+                                        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: '#10b981', fontWeight: '700' }}>
+                                            ✅ Comando enviado! As TVs devem recarregar em até 60 segundos.
                                         </div>
                                     )}
                                 </div>
@@ -1075,6 +1079,26 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>
                                             Path detectado: <span style={{ fontFamily: 'monospace', fontWeight: '700' }}>{window.location.pathname}</span>
                                         </div>
+                                    </div>
+
+                                    <div style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+                                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em' }}>Ações de Emergência</div>
+                                        <button
+                                            onClick={handleCloudflarePurge}
+                                            disabled={isPurging}
+                                            style={{
+                                                ...s.btnAction,
+                                                backgroundColor: '#ef4444',
+                                                width: '100%',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <AlertCircle size={18} />
+                                            {isPurging ? 'Processando...' : 'FORÇAR RECARREGAMENTO DE PÁGINA AGORA'}
+                                        </button>
+                                        <p style={{ fontSize: '11px', color: '#64748b', marginTop: '12px', textAlign: 'center' }}>
+                                            Use este botão se as mídias da TV estiverem desatualizadas.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

@@ -126,28 +126,38 @@ export default function App() {
   // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS
   // Verifica periodicamente se houve um comando de recarregamento forçado no painel
   useEffect(() => {
+    // Captura o timestamp inicial dos settings passados via prop (se houver)
     let lastKnownTimestamp = settings?.system_reload_timestamp || null;
 
     const checkUpdates = async () => {
       try {
+        // Busca o documento de settings mais atualizado
         const sDoc = await backend.db.getDoc(cityKey, 'settings');
         if (sDoc && sDoc.system_reload_timestamp) {
-          const newTimestamp = sDoc.system_reload_timestamp;
+          const newTimestamp = Number(sDoc.system_reload_timestamp);
 
-          // Se o timestamp mudou desde o load inicial, recarrega a página
-          if (lastKnownTimestamp !== null && newTimestamp !== lastKnownTimestamp) {
-            console.log("[APP] Nova atualização detectada! Recarregando sistema...");
+          // Se for a primeira vez que pegamos o timestamp (e não veio via props)
+          if (lastKnownTimestamp === null) {
+            lastKnownTimestamp = newTimestamp;
+            console.log("[APP] Monitoramento iniciado com timestamp:", lastKnownTimestamp);
+            return;
+          }
+
+          // Se o timestamp mudou, forçamos o reload
+          if (newTimestamp > lastKnownTimestamp) {
+            console.log(`[APP] Comando de recarga detectado! (${lastKnownTimestamp} -> ${newTimestamp})`);
             window.location.reload();
           }
+
           lastKnownTimestamp = newTimestamp;
         }
       } catch (err) {
-        console.warn("[APP] Erro silent ao verificar atualizações remotas:", err);
+        console.warn("[APP] Erro silencioso ao verificar atualizações:", err);
       }
     };
 
-    // Verifica a cada 2 minutos
-    const interval = setInterval(checkUpdates, 120000);
+    // Verifica a cada 60 segundos (mais reativo que 120s)
+    const interval = setInterval(checkUpdates, 60000);
     return () => clearInterval(interval);
   }, [cityKey, settings?.system_reload_timestamp]);
 
