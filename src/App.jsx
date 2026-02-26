@@ -175,7 +175,7 @@ export default function App() {
 
           if (lastKnownTimestampRef.current === null) {
             lastKnownTimestampRef.current = newTimestamp;
-            addLog(`[CHECK] Monitor ativo (${newTimestamp}) via ${res.source}`);
+            addLog(`[CHECK] Monitor ativo (${newTimestamp}) em ${window.location.hostname} via ${res.source}`);
             return;
           }
 
