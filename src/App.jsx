@@ -184,16 +184,15 @@ export default function App() {
             lastKnownTimestampRef.current = newTimestamp;
 
             setTimeout(() => {
-              // Força o Cloudflare a servir o index.html novo ignorando qualquer cache do navegador
-              const newUrl = window.location.origin + window.location.pathname +
+              // Força o Cloudflare a servir o index.html novo
+              const origin = window.location.protocol + "//" + window.location.host;
+              const newUrl = origin + window.location.pathname +
                 '?v=' + newTimestamp + '&t=' + Date.now();
 
-              addLog(`[RELOAD] Redirecionando para: ${newUrl}`);
-
-              // Tenta substituir o histórico para evitar que o "voltar" quebre
+              addLog(`[RELOAD] Redirecionando: ${newUrl}`);
               window.location.replace(newUrl);
 
-              // Fallback se o replace falhar ou demorar
+              // Fallbacks agressivos
               setTimeout(() => { window.location.href = newUrl; }, 1000);
               setTimeout(() => { window.location.reload(true); }, 3000);
             }, 1000);
