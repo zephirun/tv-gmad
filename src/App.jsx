@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { backend } from './services/backend';
 
 import AdminPanel from './components/AdminPanel';
-import Sidebar from './components/Sidebar';
 
 import NewsTicker from './components/NewsTicker';
 import Player from './components/Player';
@@ -15,6 +14,9 @@ import { LOCAL_CITIES } from './data/local_cities';
 // ==========================================
 // COMPONENTE PRINCIPAL (TV)
 // ==========================================
+
+const INFO_SLIDE_ITEM = { id: '__info_slide__', type: 'info', duration: 15000 };
+
 export default function App() {
   // Identificação da Cidade via URL
   const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
@@ -83,6 +85,24 @@ export default function App() {
     localStorage.setItem(`unlocked_${path}`, 'true');
     setIsLocked(false);
   };
+
+  // Enriched playlist: insere InfoSlide a cada 5 itens
+  const enrichedPlaylist = useMemo(() => {
+    if (!playlist || playlist.length === 0) return [INFO_SLIDE_ITEM];
+    const result = [];
+    for (let i = 0; i < playlist.length; i++) {
+      result.push(playlist[i]);
+      // Insere o InfoSlide a cada 5 itens
+      if ((i + 1) % 5 === 0) {
+        result.push(INFO_SLIDE_ITEM);
+      }
+    }
+    // Se a playlist não terminou com um InfoSlide, adicionar ao final
+    if (result[result.length - 1].id !== '__info_slide__') {
+      result.push(INFO_SLIDE_ITEM);
+    }
+    return result;
+  }, [playlist]);
 
   // CARREGAMENTO DE DADOS DINÂMICOS (GitHub se estiver na Vercel)
   useEffect(() => {
@@ -212,16 +232,14 @@ export default function App() {
   }, [cityKey]);
 
   const next = useCallback(() => {
-    if (playlist.length <= 1) return;
-    setCurrentIndex((prev) => (prev + 1) % playlist.length);
-  }, [playlist.length]);
+    if (enrichedPlaylist.length <= 1) return;
+    setCurrentIndex((prev) => (prev + 1) % enrichedPlaylist.length);
+  }, [enrichedPlaylist.length]);
 
   const appContainerStyle = {
     height: '100vh', width: '100vw', backgroundColor: '#000', color: '#fff',
     display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative'
   };
-
-  const mainContentStyle = { flex: 1, display: 'flex', flexDirection: 'row', overflow: 'hidden' };
 
   const playerContainerStyle = {
     flex: 1, position: 'relative', backgroundColor: '#000',
@@ -229,7 +247,7 @@ export default function App() {
   };
 
   const isMaintenanceMode = false;
-  const displayItem = playlist[currentIndex] || null;
+  const displayItem = enrichedPlaylist[currentIndex] || null;
 
   return (
     <div style={appContainerStyle}>
@@ -260,7 +278,7 @@ export default function App() {
             <div>Token: <span style={{ color: hasToken ? '#0f0' : '#f00' }}>{hasToken ? 'VALID' : 'MISSING'}</span></div>
             <div>Source: <span style={{ color: '#fff' }}>{lastSource}</span></div>
             <div>Interval: <span style={{ color: '#fff' }}>20s</span></div>
-            <div>Items: <span style={{ color: '#fff' }}>{playlist.length}</span></div>
+            <div>Items: <span style={{ color: '#fff' }}>{enrichedPlaylist.length}</span></div>
             <div>Index: <span style={{ color: '#fff' }}>{currentIndex}</span></div>
           </div>
           <div style={{ fontWeight: 'bold', borderBottom: '1px solid #333', marginBottom: 5 }}>ACTIVITY LOG:</div>
@@ -269,23 +287,32 @@ export default function App() {
         </div>
       )}
 
-      <div style={mainContentStyle}>
-        <Sidebar weather={weather} setIsAdminOpen={setIsAdminOpen} settings={settings} />
+      {/* Botão Admin invisível no canto superior esquerdo */}
+      <button
+        onClick={() => setIsAdminOpen(true)}
+        style={{
+          position: 'absolute', top: 0, left: 0,
+          width: '60px', height: '60px',
+          background: 'transparent', border: 'none',
+          cursor: 'pointer', zIndex: 100, opacity: 0
+        }}
+      />
 
-        <main style={playerContainerStyle}>
-          {isMaintenanceMode ? (
-            <MaintenanceScreen />
-          ) : (
-            <Player
-              currentItem={displayItem}
-              playlist={playlist}
-              currentIndex={currentIndex}
-              next={next}
-              isMuted={isMuted}
-            />
-          )}
-        </main>
-      </div>
+      <main style={playerContainerStyle}>
+        {isMaintenanceMode ? (
+          <MaintenanceScreen />
+        ) : (
+          <Player
+            currentItem={displayItem}
+            playlist={enrichedPlaylist}
+            currentIndex={currentIndex}
+            next={next}
+            isMuted={isMuted}
+            weather={weather}
+            settings={settings}
+          />
+        )}
+      </main>
 
       <NewsTicker newsItems={newsItems} />
     </div>

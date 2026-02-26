@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import InfoSlide from './InfoSlide';
 
-export default function Player({ currentItem, playlist, currentIndex, next }) {
+export default function Player({ currentItem, playlist, currentIndex, next, weather, settings }) {
     const [isLoading, setIsLoading] = useState(true);
     const [retryCount, setRetryCount] = useState(0);
     const ytPlayerRef = useRef(null);
@@ -10,13 +11,25 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
 
     // Reseta estado ao trocar de item
     useEffect(() => {
-        setIsLoading(true);
+        if (currentItem?.type === 'info') {
+            setIsLoading(false);
+        } else {
+            setIsLoading(true);
+        }
         setRetryCount(0);
-    }, [currentItem?.src]);
+    }, [currentItem?.src, currentItem?.type]);
 
     // Efeito para carregar o próximo item
     useEffect(() => {
         if (!currentItem) return;
+
+        // Se for info slide, define um timer para trocar
+        if (currentItem.type === 'info') {
+            const timer = setTimeout(() => {
+                next();
+            }, currentItem.duration || 15000);
+            return () => clearTimeout(timer);
+        }
 
         // Se for imagem, define um timer para trocar
         if (currentItem.type === 'image') {
@@ -116,8 +129,9 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
     };
 
     // Anti-travamento de carregamento (WebOS) — 25s para vídeos, 30s para YouTube
+    // Ignora itens do tipo 'info' e 'image' (já controlados por timer)
     useEffect(() => {
-        if (!currentItem || currentItem.type === 'image') return;
+        if (!currentItem || currentItem.type === 'image' || currentItem.type === 'info') return;
         const timeout = currentItem.type === 'youtube' ? 30000 : 25000;
         const timer = setTimeout(() => {
             if (isLoading) {
@@ -133,13 +147,17 @@ export default function Player({ currentItem, playlist, currentIndex, next }) {
     return (
         <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: 'black', overflow: 'hidden' }}>
 
-            {isLoading && (
+            {isLoading && currentItem.type !== 'info' && (
                 <div style={{
                     position: 'absolute', inset: 0, zIndex: 50,
                     background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                     <div className="spinner" style={{ animation: 'spin 1s linear infinite' }}></div>
                 </div>
+            )}
+
+            {currentItem.type === 'info' && (
+                <InfoSlide weather={weather} settings={settings} />
             )}
 
             {currentItem.type === 'image' && (
