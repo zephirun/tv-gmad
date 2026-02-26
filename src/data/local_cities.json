@@ -10,6 +10,14 @@
           "duration": null
         },
         {
+          "type": "video",
+          "src": "/madville/Coleção Realce ARAUCO.mp4",
+          "title": "Coleção Realce Arauco",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058805
+        },
+        {
           "id": "f-3",
           "type": "video",
           "src": "/madville/videotela_madville.mp4",
