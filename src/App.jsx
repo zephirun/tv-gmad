@@ -38,6 +38,8 @@ export default function App() {
   // Debug Diagnostics
   const [showDebug, setShowDebug] = useState(false);
   const [debugLog, setDebugLog] = useState([]);
+  const [lastSource, setLastSource] = useState('N/A');
+  const [hasToken, setHasToken] = useState(false);
 
   const addLog = (msg) => {
     const time = new Date().toLocaleTimeString();
@@ -86,34 +88,36 @@ export default function App() {
   useEffect(() => {
     const loadAppData = async () => {
       setIsLoadingData(true);
-      addLog(`[APP] Iniciando carregamento para: ${cityKey}`);
+      addLog(`[APP] Carregando: ${cityKey}`);
       try {
-        const [pDoc, nDoc, sDoc] = await Promise.all([
+        const [pRes, nRes, sRes] = await Promise.all([
           backend.db.getDoc(cityKey, 'playlist'),
           backend.db.getDoc(cityKey, 'news'),
           backend.db.getDoc(cityKey, 'settings')
         ]);
 
-        if (pDoc) {
-          setPlaylist(pDoc.items || pDoc || []);
-          addLog(`[APP] Playlist carregada (${pDoc.items?.length || pDoc.length} itens)`);
+        if (pRes?.data) {
+          setPlaylist(pRes.data.items || pRes.data || []);
+          addLog(`[APP] Playlist: ${pRes.source}`);
         }
-        if (nDoc) {
-          setNewsItems(nDoc.items || nDoc || []);
-          addLog(`[APP] Notícias carregadas`);
+        if (nRes?.data) {
+          setNewsItems(nRes.data.items || nRes.data || []);
+          addLog(`[APP] Notícias: ${nRes.source}`);
         }
-        if (sDoc) {
+        if (sRes?.data) {
+          const sDoc = sRes.data;
           setSettings(sDoc || {});
-          addLog(`[APP] Settings carregado. Time: ${sDoc.system_reload_timestamp}`);
+          setLastSource(sRes.source);
+          setHasToken(sRes.hasToken);
+          addLog(`[APP] Settings: ${sRes.source} (TS: ${sDoc.system_reload_timestamp})`);
 
           if (lastKnownTimestampRef.current === null && sDoc.system_reload_timestamp) {
             lastKnownTimestampRef.current = Number(sDoc.system_reload_timestamp);
-            addLog(`[APP] Timestamp inicial definido: ${lastKnownTimestampRef.current}`);
           }
         }
 
       } catch (err) {
-        addLog(`[ERR] Falha ao carregar dados: ${err.message}`);
+        addLog(`[ERR] Load failed: ${err.message}`);
         console.warn("Falha ao carregar dados dinâmicos, mantendo estáticos:", err);
       } finally {
         setIsLoadingData(false);
@@ -157,60 +161,52 @@ export default function App() {
     return () => clearInterval(interval);
   }, [settings?.weatherCity]);
 
-  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO)
+  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO: 20s)
   useEffect(() => {
-    let failCount = 0;
-
     const checkUpdates = async () => {
-      addLog(`[CHECK] Verificando GitHub...`);
       try {
-        const sDoc = await backend.db.getDoc(cityKey, 'settings');
+        const res = await backend.db.getDoc(cityKey, 'settings');
 
-        if (sDoc && sDoc.system_reload_timestamp) {
+        if (res?.data && res.data.system_reload_timestamp) {
+          const sDoc = res.data;
           const newTimestamp = Number(sDoc.system_reload_timestamp);
-          failCount = 0;
+          setLastSource(res.source);
+          setHasToken(res.hasToken);
 
           if (lastKnownTimestampRef.current === null) {
             lastKnownTimestampRef.current = newTimestamp;
-            addLog(`[CHECK] Ref inicializado como: ${newTimestamp}`);
+            addLog(`[CHECK] Monitor ativo (${newTimestamp}) via ${res.source}`);
             return;
           }
 
           if (newTimestamp > lastKnownTimestampRef.current) {
-            addLog(`[TRIGGER] NOVO COMANDO! ${lastKnownTimestampRef.current} -> ${newTimestamp}`);
+            addLog(`[TRIGGER] NOVO COMANDO DETECTADO! (${res.source})`);
             lastKnownTimestampRef.current = newTimestamp;
 
             setTimeout(() => {
               const url = new URL(window.location.href);
               url.searchParams.set('reloaded', Date.now());
-              addLog(`[RELOAD] Executando replace para ${url.searchParams.get('reloaded')}`);
+              addLog(`[RELOAD] Executando replace...`);
               window.location.replace(url.toString());
 
-              // Backup agressivo
               setTimeout(() => {
                 addLog(`[RELOAD] Fallback: Forçando via href.`);
                 window.location.href = url.toString();
               }, 1500);
-              // Terceiro nível se suportado
               setTimeout(() => { window.location.reload(); }, 4000);
             }, 1000);
           } else {
-            addLog(`[CHECK] Sem mudanças (${newTimestamp})`);
+            // Add periodic log only every 3 checks to avoid spamming
+            if (Math.random() < 0.3) addLog(`[CHECK] Sem mudanças (${newTimestamp}) via ${res.source}`);
           }
-        } else {
-          addLog(`[CHECK] Doc retornado sem timestamp.`);
         }
       } catch (err) {
-        failCount++;
-        addLog(`[FAIL] Erro na verificação: ${err.message}`);
+        addLog(`[FAIL] Verificação: ${err.message}`);
       }
     };
 
-    // Verifica a cada 20 segundos
-    const interval = setInterval(checkUpdates, 20000);
-    // Executa uma vez logo após o mount
+    const interval = setInterval(checkUpdates, 20000); // 20 segundos
     setTimeout(checkUpdates, 2000);
-
     return () => clearInterval(interval);
   }, [cityKey]);
 
@@ -253,15 +249,20 @@ export default function App() {
       {showDebug && (
         <div style={{
           position: 'absolute', top: 50, right: 10, width: 350, maxHeight: '80vh',
-          backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid #0f0', padding: 10,
+          backgroundColor: 'rgba(0,0,0,0.95)', border: '1px solid #0f0', padding: 10,
           fontSize: 10, zIndex: 9999, overflowY: 'auto', pointerEvents: 'none',
-          fontFamily: 'monospace', color: '#0f0'
+          fontFamily: 'monospace', color: '#0f0', borderRadius: 5, boxShadow: '0 0 10px #0f0'
         }}>
-          <h4 style={{ margin: '0 0 5px 0', borderBottom: '1px solid #0f0' }}>TV DIAGNOSTICS (Press D to hide)</h4>
-          <div>City: {cityKey}</div>
-          <div>Known TS: {lastKnownTimestampRef.current}</div>
-          <div style={{ margin: '10px 0 5px 0', fontWeight: 'bold' }}>LOGS:</div>
-          {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 2 }}>{log}</div>)}
+          <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid #0f0', color: '#fff' }}>TV STATUS DIAGNOSTICS</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, marginBottom: 10 }}>
+            <div>City: <span style={{ color: '#fff' }}>{cityKey}</span></div>
+            <div>Token: <span style={{ color: hasToken ? '#0f0' : '#f00' }}>{hasToken ? 'VALID' : 'MISSING'}</span></div>
+            <div>Source: <span style={{ color: '#fff' }}>{lastSource}</span></div>
+            <div>Interval: <span style={{ color: '#fff' }}>20s</span></div>
+          </div>
+          <div style={{ fontWeight: 'bold', borderBottom: '1px solid #333', marginBottom: 5 }}>ACTIVITY LOG:</div>
+          {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 2, borderLeft: '2px solid #222', paddingLeft: 5 }}>{log}</div>)}
+          <div style={{ marginTop: 10, color: '#888', fontStyle: 'italic' }}>Known TS: {lastKnownTimestampRef.current}</div>
         </div>
       )}
 
