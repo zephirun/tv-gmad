@@ -4,8 +4,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { LOGO_URL, CITY_CONFIG, getWeatherDescription } from '../constants';
 
 /**
- * InfoSlide – Slide de informações em tela cheia para o carrossel da TV.
- * Mostra: Logo + Relógio, Clima, Instagram e Wi-Fi em um grid 2×2.
+ * InfoSlide – Slide de informações em tela cheia (grid 2×2).
+ * Mostra: Relógio, Clima, Instagram e Wi-Fi.
  */
 
 const Clock = () => {
@@ -17,7 +17,7 @@ const Clock = () => {
     }, []);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem' }}>
+        <>
             <img
                 src={LOGO_URL}
                 alt="GMAD"
@@ -30,8 +30,7 @@ const Clock = () => {
                 fontWeight: 200,
                 color: '#275D38',
                 letterSpacing: '-0.03em',
-                fontFamily: 'var(--font-display)',
-                marginBottom: '0.75rem'
+                fontFamily: 'var(--font-display)'
             }}>
                 {dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
@@ -49,12 +48,20 @@ const Clock = () => {
             }}>
                 {dateTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </div>
-        </div>
+        </>
     );
 };
 
 export default function InfoSlide({ weather, settings }) {
     const currentInsta = { user: '@grupogmad', url: 'https://instagram.com/grupogmad' };
+
+    const cardBase = {
+        height: '100%',
+        boxSizing: 'border-box',
+        borderRadius: '24px',
+        position: 'relative',
+        overflow: 'hidden'
+    };
 
     return (
         <div style={{
@@ -63,27 +70,26 @@ export default function InfoSlide({ weather, settings }) {
             backgroundColor: '#f8f9fa',
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gridTemplateRows: '1.2fr 1fr',
+            gridTemplateRows: '1fr 1fr',
             gap: '1.5rem',
-            padding: '2rem',
+            padding: '1.5rem',
             fontFamily: 'var(--font-primary)',
             boxSizing: 'border-box',
             overflow: 'hidden'
         }}>
-            {/* Quadrante Superior Esquerdo: Logo + Relógio */}
+            {/* Card Relógio [0,0] */}
             <div style={{
+                ...cardBase,
                 backgroundColor: '#ffffff',
-                borderRadius: '32px',
-                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-                border: '1px solid #e5e7eb',
-                position: 'relative',
-                overflow: 'hidden'
+                gap: '1rem',
+                padding: '2rem'
             }}>
-                {/* Decorative circle */}
                 <div style={{
                     position: 'absolute', top: '-40px', left: '-40px',
                     width: '120px', height: '120px', borderRadius: '50%',
@@ -92,19 +98,16 @@ export default function InfoSlide({ weather, settings }) {
                 <Clock />
             </div>
 
-            {/* Quadrante Superior Direito: Clima */}
+            {/* Card Clima [0,1] */}
             <div style={{
+                ...cardBase,
                 backgroundColor: '#275D38',
-                borderRadius: '32px',
-                padding: '2.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
+                justifyContent: 'space-between',
+                padding: '2rem',
                 boxShadow: '0 4px 24px rgba(39, 93, 56, 0.15)'
             }}>
-                {/* Decorative circle */}
                 <div style={{
                     position: 'absolute', bottom: '-60px', right: '-60px',
                     width: '200px', height: '200px', borderRadius: '50%',
@@ -116,7 +119,7 @@ export default function InfoSlide({ weather, settings }) {
                     color: 'rgba(134, 239, 172, 0.7)',
                     fontSize: '0.85rem', textTransform: 'uppercase',
                     fontWeight: 700, letterSpacing: '0.15em',
-                    marginBottom: '1.5rem', position: 'relative', zIndex: 10
+                    position: 'relative', zIndex: 10
                 }}>
                     <MapPin style={{ width: '16px', height: '16px', marginRight: '8px' }} />
                     {settings?.weatherCity || CITY_CONFIG.name}
@@ -125,7 +128,8 @@ export default function InfoSlide({ weather, settings }) {
                 <div style={{
                     display: 'flex', alignItems: 'center',
                     justifyContent: 'space-between',
-                    position: 'relative', zIndex: 10
+                    position: 'relative', zIndex: 10,
+                    flex: 1, marginTop: '1rem'
                 }}>
                     <div>
                         <span style={{
@@ -154,23 +158,21 @@ export default function InfoSlide({ weather, settings }) {
                 </div>
             </div>
 
-            {/* Quadrante Inferior Esquerdo: Instagram */}
+            {/* Card Instagram [1,0] */}
             <div style={{
+                ...cardBase,
                 backgroundColor: '#ffffff',
-                borderRadius: '32px',
-                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2rem',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-                border: '1px solid #e5e7eb',
-                position: 'relative',
-                overflow: 'hidden'
+                padding: '2rem'
             }}>
                 <div style={{
-                    width: 'clamp(100px, 12vw, 160px)',
-                    height: 'clamp(100px, 12vw, 160px)',
+                    width: '110px',
+                    height: '110px',
                     borderRadius: '16px',
                     backgroundColor: '#ffffff',
                     padding: '8px',
@@ -182,7 +184,7 @@ export default function InfoSlide({ weather, settings }) {
                 }}>
                     <QRCodeSVG
                         value={currentInsta.url}
-                        size={140}
+                        size={110}
                         fgColor="#275D38"
                         bgColor="#ffffff"
                         level="M"
@@ -220,19 +222,16 @@ export default function InfoSlide({ weather, settings }) {
                 </div>
             </div>
 
-            {/* Quadrante Inferior Direito: Wi-Fi */}
+            {/* Card Wi-Fi [1,1] */}
             <div style={{
+                ...cardBase,
                 backgroundColor: '#E35205',
-                borderRadius: '32px',
-                padding: '2.5rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
+                padding: '2rem',
                 boxShadow: '0 4px 24px rgba(227, 82, 5, 0.2)'
             }}>
-                {/* Decorative icon */}
                 <div style={{
                     position: 'absolute', bottom: '-30px', right: '-30px',
                     color: 'rgba(255, 255, 255, 0.15)',
