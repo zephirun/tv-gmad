@@ -30,6 +30,34 @@ export default function NewsTicker({ newsItems }) {
             zIndex: 100,
             borderTop: '2px solid #E35205'
         }}>
+            {/* Badge INFO GMAD */}
+            <div style={{
+                background: '#E35205',
+                color: 'white',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 28px',
+                flexShrink: 0,
+                minWidth: '160px'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        marginBottom: '2px',
+                        textTransform: 'uppercase'
+                    }}>Info</div>
+                    <div style={{
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        fontFamily: "var(--font-display)"
+                    }}>GMAD</div>
+                </div>
+            </div>
+
+            {/* Texto da Notícia */}
             <div style={{
                 flex: 1,
                 WebkitFlex: 1,

@@ -87,8 +87,9 @@ export default function InfoSlide({ weather, settings }) {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '1rem',
-                padding: '2rem'
+                gap: '1.5rem',
+                padding: '2.5rem',
+                paddingTop: '2rem'
             }}>
                 <div style={{
                     position: 'absolute', top: '-40px', left: '-40px',
@@ -168,12 +169,12 @@ export default function InfoSlide({ weather, settings }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2rem',
-                padding: '2rem'
+                padding: '2rem 2.5rem'
             }}>
                 <div style={{
-                    width: '110px',
-                    height: '110px',
-                    borderRadius: '16px',
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '12px',
                     backgroundColor: '#ffffff',
                     padding: '8px',
                     display: 'flex',
@@ -184,7 +185,7 @@ export default function InfoSlide({ weather, settings }) {
                 }}>
                     <QRCodeSVG
                         value={currentInsta.url}
-                        size={110}
+                        size={120}
                         fgColor="#275D38"
                         bgColor="#ffffff"
                         level="M"
