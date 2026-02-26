@@ -40,8 +40,10 @@ export default function App() {
   const [debugLog, setDebugLog] = useState([]);
 
   const addLog = (msg) => {
-    console.log(msg);
-    setDebugLog(prev => [msg, ...prev].slice(0, 20));
+    const time = new Date().toLocaleTimeString();
+    const logEntry = `[${time}] ${msg}`;
+    console.log(logEntry);
+    setDebugLog(prev => [logEntry, ...prev].slice(0, 30));
   };
 
   // Armazena o último timestamp conhecido para evitar loops de reload
@@ -84,9 +86,8 @@ export default function App() {
   useEffect(() => {
     const loadAppData = async () => {
       setIsLoadingData(true);
-      addLog(`[APP] Iniciando carregamento dinâmico para: ${cityKey}`);
+      addLog(`[APP] Iniciando carregamento para: ${cityKey}`);
       try {
-        // Tenta buscar o dado mais fresco (especialmente útil no Admin)
         const [pDoc, nDoc, sDoc] = await Promise.all([
           backend.db.getDoc(cityKey, 'playlist'),
           backend.db.getDoc(cityKey, 'news'),
@@ -103,15 +104,16 @@ export default function App() {
         }
         if (sDoc) {
           setSettings(sDoc || {});
-          addLog(`[APP] Configurações carregadas. Timestamp: ${sDoc.system_reload_timestamp}`);
-          // Inicializa o timestamp se ainda não estiver definido
+          addLog(`[APP] Settings carregado. Time: ${sDoc.system_reload_timestamp}`);
+
           if (lastKnownTimestampRef.current === null && sDoc.system_reload_timestamp) {
             lastKnownTimestampRef.current = Number(sDoc.system_reload_timestamp);
+            addLog(`[APP] Timestamp inicial definido: ${lastKnownTimestampRef.current}`);
           }
         }
 
       } catch (err) {
-        addLog(`[APP] Falha no carregamento dinâmico: ${err.message}`);
+        addLog(`[ERR] Falha ao carregar dados: ${err.message}`);
         console.warn("Falha ao carregar dados dinâmicos, mantendo estáticos:", err);
       } finally {
         setIsLoadingData(false);
@@ -155,12 +157,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [settings?.weatherCity]);
 
-  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS
+  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO)
   useEffect(() => {
     let failCount = 0;
 
     const checkUpdates = async () => {
-      addLog(`[APP] Verificando atualizações remotas...`);
+      addLog(`[CHECK] Verificando GitHub...`);
       try {
         const sDoc = await backend.db.getDoc(cityKey, 'settings');
 
@@ -170,37 +172,44 @@ export default function App() {
 
           if (lastKnownTimestampRef.current === null) {
             lastKnownTimestampRef.current = newTimestamp;
-            addLog(`[APP] Monitoramento iniciado com timestamp: ${newTimestamp}`);
+            addLog(`[CHECK] Ref inicializado como: ${newTimestamp}`);
             return;
           }
 
-          addLog(`[APP] Comparando timestamps: Atual=${newTimestamp}, Conhecido=${lastKnownTimestampRef.current}`);
-
           if (newTimestamp > lastKnownTimestampRef.current) {
-            addLog(`[APP] NOVO COMANDO DETECTADO! RECARREGANDO EM 3 SEGUNDOS...`);
+            addLog(`[TRIGGER] NOVO COMANDO! ${lastKnownTimestampRef.current} -> ${newTimestamp}`);
             lastKnownTimestampRef.current = newTimestamp;
 
             setTimeout(() => {
               const url = new URL(window.location.href);
               url.searchParams.set('reloaded', Date.now());
+              addLog(`[RELOAD] Executando replace para ${url.searchParams.get('reloaded')}`);
               window.location.replace(url.toString());
-              // Fallback radical se o replace falhar
-              setTimeout(() => { window.location.href = url.toString(); }, 2000);
-            }, 3000);
+
+              // Backup agressivo
+              setTimeout(() => {
+                addLog(`[RELOAD] Fallback: Forçando via href.`);
+                window.location.href = url.toString();
+              }, 1500);
+              // Terceiro nível se suportado
+              setTimeout(() => { window.location.reload(); }, 4000);
+            }, 1000);
+          } else {
+            addLog(`[CHECK] Sem mudanças (${newTimestamp})`);
           }
         } else {
-          addLog(`[APP] Settings carregado mas sem timestamp de reload.`);
+          addLog(`[CHECK] Doc retornado sem timestamp.`);
         }
       } catch (err) {
         failCount++;
-        addLog(`[APP] Falha ao verificar atualizações: ${err.message}`);
+        addLog(`[FAIL] Erro na verificação: ${err.message}`);
       }
     };
 
-    // Verifica a cada 60 segundos
-    const interval = setInterval(checkUpdates, 60000);
-    // Executa uma vez logo após o mount (com pequeno delay para dar tempo do loadAppData)
-    setTimeout(checkUpdates, 5000);
+    // Verifica a cada 20 segundos
+    const interval = setInterval(checkUpdates, 20000);
+    // Executa uma vez logo após o mount
+    setTimeout(checkUpdates, 2000);
 
     return () => clearInterval(interval);
   }, [cityKey]);
@@ -243,14 +252,16 @@ export default function App() {
 
       {showDebug && (
         <div style={{
-          position: 'absolute', top: 50, right: 10, width: 300, maxHeight: '80vh',
-          backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid #f00', padding: 10,
-          fontSize: 10, zIndex: 9999, overflowY: 'auto', pointerEvents: 'none'
+          position: 'absolute', top: 50, right: 10, width: 350, maxHeight: '80vh',
+          backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid #0f0', padding: 10,
+          fontSize: 10, zIndex: 9999, overflowY: 'auto', pointerEvents: 'none',
+          fontFamily: 'monospace', color: '#0f0'
         }}>
-          <h4 style={{ margin: '0 0 5px 0', color: '#f00' }}>TV DEBUG LOG (Press D to hide)</h4>
-          {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 4, borderBottom: '1px solid #333' }}>{log}</div>)}
-          <div style={{ marginTop: 10 }}>City: {cityKey}</div>
-          <div>Timestamp Ref: {lastKnownTimestampRef.current}</div>
+          <h4 style={{ margin: '0 0 5px 0', borderBottom: '1px solid #0f0' }}>TV DIAGNOSTICS (Press D to hide)</h4>
+          <div>City: {cityKey}</div>
+          <div>Known TS: {lastKnownTimestampRef.current}</div>
+          <div style={{ margin: '10px 0 5px 0', fontWeight: 'bold' }}>LOGS:</div>
+          {debugLog.map((log, i) => <div key={i} style={{ marginBottom: 2 }}>{log}</div>)}
         </div>
       )}
 

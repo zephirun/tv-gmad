@@ -1,65 +1,14 @@
-/**
- * BACKEND SERVICE ABSTRACTION LAYER
- * 
- * Centraliza as chamadas ao backend.
- * Suporta PROVIDER: 'SUPABASE' | 'LOCAL'
- */
-
 import { supabase } from '../supabase/client';
-export { supabase };
 
-// ==========================================
-// CONFIGURATION
-// ==========================================
-// MUDANÇA: Agora o padrão é LOCAL para eliminar dependência do Supabase
-export const PROVIDER = 'LOCAL';
+const PROVIDER = 'LOCAL'; // Pode ser 'SUPABASE' ou 'LOCAL'
 
+/**
+ * Backend Service - Abstração de dados
+ * Gerencia o carregamento/salvamento via GitHub (Vercel/Remote) ou API Local (Desktop)
+ */
 export const backend = {
-    // Auth (Mockado no modo LOCAL)
-    auth: {
-        signInAnonymously: async () => ({ user: { isAnonymous: true, uid: 'anon' } }),
-        signInWithPassword: async (email, password) => {
-            if (PROVIDER === 'SUPABASE') {
-                let finalEmail = email.includes('@') ? email : `${email}@gmad.com`;
-                const { data, error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
-                if (error) throw error;
-                return data.user;
-            }
-            // LOCAL: Aceita qualquer coisa para admin/admin (ou o que estiver no JSON futuramente)
-            if (email === 'admin' && password === 'admin') return { uid: 'admin' };
-            throw new Error("Credenciais inválidas");
-        },
-        onAuthStateChanged: (callback) => {
-            setTimeout(() => callback({ isAnonymous: true, uid: 'anon' }), 0);
-            return () => { };
-        },
-        signOut: async () => { },
-        currentUser: () => ({ isAnonymous: true, uid: 'anon' })
-    },
-
-    // Database (Local API / Supabase)
     db: {
-        // No modo LOCAL, subscribeToDoc apenas emite o dado inicial
-        subscribeToDoc: (collection, docId, callback) => {
-            if (PROVIDER === 'LOCAL') {
-                // Aqui no LOCAL, usamos os dados importados no App.jsx.
-                // Mas para compatibilidade, o backend.db.getDoc será usado.
-                return () => { };
-            }
-            // Supabase implementation...
-            if (PROVIDER === 'SUPABASE' && supabase) {
-                supabase.from('tv_collections').select(docId).eq('collection_id', collection).maybeSingle()
-                    .then(({ data }) => data && callback(data[docId]));
-
-                const channel = supabase.channel(`public:tv_collections:${collection}`)
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tv_collections', filter: `collection_id=eq.${collection}` },
-                        (p) => p.new && p.new[docId] && callback(p.new[docId]))
-                    .subscribe();
-                return () => supabase.removeChannel(channel);
-            }
-            return () => { };
-        },
-
+        // BUSCA HÍBRIDA (GITHUB PARA VERCEL / API LOCAL PARA DESKTOP)
         getDoc: async (collection, docId) => {
             const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
 
@@ -73,13 +22,12 @@ export const backend = {
                     const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3') || localStorage.getItem('gmad_github_token');
                     const headers = {
                         'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
                     };
                     if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
 
                     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?${cacheBuster}`, {
-                        headers
+                        headers,
+                        cache: 'no-store'
                     });
 
                     if (res.ok) {
@@ -93,36 +41,36 @@ export const backend = {
                             const decoded = new TextDecoder().decode(bytes);
 
                             const allData = JSON.parse(decoded);
+                            console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Sucesso via API GitHub`);
                             return (allData[collection] && allData[collection][docId]) || null;
                         }
+                    } else {
+                        console.warn(`[BACKEND] API GitHub falhou (Status ${res.status}). Tentando fallback RAW...`);
                     }
                 } catch (e) {
-                    console.warn("[BACKEND] getDoc API falhou ou erro de parsing, tentando RAW:", e.message);
+                    console.warn("[BACKEND] Erro na API GitHub, tentando modo RAW:", e.message);
                 }
 
-                // 2. FALLBACK VIA GITHUB RAW
+                // 2. FALLBACK VIA GITHUB RAW (Atenção: Cache do Cloudflare/GitHub pode demorar ~5min)
                 try {
                     const rawRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?${cacheBuster}`, {
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache'
-                        }
+                        cache: 'no-store'
                     });
                     if (rawRes.ok) {
                         const allData = await rawRes.json();
                         console.log(`[BACKEND] getDoc('${collection}', '${docId}') -> Dados via RAW carregados.`);
                         return (allData[collection] && allData[collection][docId]) || null;
                     } else {
-                        throw new Error(`Fallback RAW status ${rawRes.status}`);
+                        throw new Error(`Status ${rawRes.status}`);
                     }
                 } catch (e) {
-                    throw new Error(`Falha total no carregamento remoto: ${e.message}`);
+                    throw new Error(`Falha total no carregamento remoto (API e RAW): ${e.message}`);
                 }
             }
 
             if (PROVIDER === 'LOCAL') {
                 try {
-                    const res = await fetch('/api/get-local-data');
+                    const res = await fetch('/api/get-local-data', { cache: 'no-store' });
                     const allData = await res.json();
                     return (allData[collection] && allData[collection][docId]) || null;
                 } catch (e) {
@@ -151,7 +99,8 @@ export const backend = {
 
                 // 1. Pegar o arquivo atual do GitHub (usamos metadata para ter o SHA e conteúdo base64)
                 const getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` },
+                    cache: 'no-store'
                 });
 
                 if (!getFileRes.ok) {
@@ -211,177 +160,43 @@ export const backend = {
                 const response = await fetch('/api/save-city-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cityKey: collection,
-                        data: { [docId]: data }
-                    })
+                    body: JSON.stringify({ collectionId: collection, docId, data })
                 });
-
-                if (!response.ok) throw new Error("Erro ao salvar dados localmente");
-                return await response.json();
-            }
-
-            if (PROVIDER === 'SUPABASE') {
-                const updateData = { collection_id: collection, [docId]: data };
-                const { error } = await supabase.from('tv_collections').upsert(updateData, { onConflict: 'collection_id' });
-                if (error) throw error;
-                return { success: true };
-            }
-        },
-
-        setDocsBatch: async (collection, docsMap) => {
-            const isRemote = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('pages.dev');
-            if (isRemote) {
-                console.log("[BACKEND] Salvando lote via GitHub API...");
-                const GITHUB_TOKEN = localStorage.getItem('gmad_github_token_v3');
-                const REPO = 'zephirun/tv-gmad';
-                const FILE_PATH = 'src/data/local_cities.json';
-
-                if (!GITHUB_TOKEN) throw new Error("GitHub Token não configurado no Painel Admin.");
-
-                let getFileRes;
-                try {
-                    // Adicionamos ?v para evitar que o cache do browser nos dê a versão antiga (raw) do getDoc
-                    getFileRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?v=${Date.now()}`, {
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-                } catch (netErr) {
-                    console.error("[BACKEND] Erro fatal no fetch GET GitHub:", netErr);
-                    throw new Error(`Erro de conexão com GitHub: ${netErr.message || 'Verifique sua internet ou CORS'}`);
-                }
-
-                if (!getFileRes.ok) {
-                    const errorData = await getFileRes.json().catch(() => ({}));
-                    throw new Error(`Erro GitHub (${getFileRes.status}): ${errorData.message || 'Falha ao buscar SHAs'}`);
-                }
-
-                const fileData = await getFileRes.json();
-
-                if (!fileData || !fileData.content) {
-                    console.error("[BACKEND] Resposta inesperada do GitHub (Batch):", fileData);
-                    throw new Error("Não foi possível obter o conteúdo do GitHub para salvamento em lote. Tente recarregar a página.");
-                }
-
-                const cleanBase64 = fileData.content.replace(/\n/g, '').replace(/\r/g, '');
-                const allData = JSON.parse(decodeURIComponent(escape(atob(cleanBase64))));
-
-                if (!allData[collection]) allData[collection] = {};
-
-                console.log(`[BACKEND] Mesclando ${Object.keys(docsMap).length} documentos em '${collection}'...`);
-                Object.entries(docsMap).forEach(([docId, data]) => {
-                    if (!allData[collection][docId]) allData[collection][docId] = {};
-                    if (typeof data === 'object' && !Array.isArray(data)) {
-                        allData[collection][docId] = { ...allData[collection][docId], ...data };
-                    } else {
-                        allData[collection][docId] = data;
-                    }
-                });
-
-                let updateRes;
-                try {
-                    updateRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
-                        },
-                        body: JSON.stringify({
-                            message: `Update batch ${Object.keys(docsMap).join(', ')} via Admin Panel`,
-                            content: btoa(unescape(encodeURIComponent(JSON.stringify(allData, null, 2)))),
-                            sha: fileData.sha
-                        })
-                    });
-                } catch (netErr) {
-                    console.error("Erro de rede no PUT:", netErr);
-                    throw new Error("Erro de conexão (PUT) com o GitHub. Verifique o Token ou Internet.");
-                }
-
-                if (!updateRes.ok) {
-                    const errorData = await updateRes.json().catch(() => ({}));
-                    throw new Error(`Erro no Commit (${updateRes.status}): ${errorData.message}`);
-                }
-                return { success: true };
-            }
-
-            if (PROVIDER === 'LOCAL') {
-                const response = await fetch('/api/save-city-data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cityKey: collection,
-                        data: docsMap
-                    })
-                });
-                if (!response.ok) throw new Error("Erro ao salvar lote localmente");
-                return await response.json();
-            }
-
-            if (PROVIDER === 'SUPABASE') {
-                await Promise.all(Object.entries(docsMap).map(([docId, data]) => {
-                    const updateData = { collection_id: collection, [docId]: data };
-                    return supabase.from('tv_collections').upsert(updateData, { onConflict: 'collection_id' });
-                }));
-                return { success: true };
-            }
-        }
-    },
-
-    // Storage (Upload Local vs Supabase)
-    storage: {
-        uploadFile: async (file, cityName = 'madville') => {
-            if (PROVIDER === 'LOCAL') {
-                const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        'x-city-name': cityName,
-                        'x-file-name': safeName
-                    },
-                    body: file
-                });
-                const result = await response.json();
-                return result.url;
+                return response.json();
             }
 
             if (PROVIDER === 'SUPABASE' && supabase) {
-                const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                const { data, error } = await supabase.storage.from('media').upload(safeName, file);
+                const { error } = await supabase
+                    .from('tv_collections')
+                    .upsert({ collection_id: collection, [docId]: data });
                 if (error) throw error;
-                const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(safeName);
-                return publicUrl;
+                return { success: true };
             }
-        },
-        deleteFile: async (url) => {
-            // No modo local, deletar é opcional ou removemos do disco se quiser
-            console.warn("Delete local file not implemented yet:", url);
-            return { success: true };
         }
     },
 
-    // Cloudflare Integration
     cloudflare: {
         purgeCache: async (zoneId, apiToken) => {
-            if (!zoneId || !apiToken) throw new Error("Cloudflare Zone ID ou API Token não configurados.");
-
-            const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ purge_everything: true })
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => ({}));
-                throw new Error(`Erro Cloudflare (${res.status}): ${errorData.errors?.[0]?.message || 'Falha ao limpar cache'}`);
+            if (!zoneId || !apiToken) {
+                console.warn("[BACKEND] Credenciais do Cloudflare ausentes, pulando purge.");
+                return;
             }
-
-            return await res.json();
+            try {
+                // Cloudflare exige chamada via proxy ou direto se permitido cors
+                // Aqui tentamos direto (Worker costuma bloquear, mas Pages permite as vezes)
+                const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ purge_everything: true })
+                });
+                return res.json();
+            } catch (e) {
+                console.error("[BACKEND] Cloudflare Purge failed:", e);
+                throw e;
+            }
         }
     }
 };
