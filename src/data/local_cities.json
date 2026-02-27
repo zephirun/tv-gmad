@@ -32,6 +32,22 @@
           "duration": null
         },
         {
+          "type": "video",
+          "src": "/madville/RO 65 PRIME  - Rometal e GMAD.mp4",
+          "title": "RO 65 PRIME Rometal e GMAD",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772198728863
+        },
+        {
+          "type": "video",
+          "src": "/madville/RO 65 PRIME  disponível na GMAD   Rometal e GMAD.mp4",
+          "title": "RO 65 PRIME - Rometal GMAD",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772198773636
+        },
+        {
           "id": "f-5",
           "type": "video",
           "src": "/madville/puxadores_avulsos.mp4",
@@ -90,7 +106,7 @@
       "instagramUser": "@gmadmadville",
       "instagramUrl2": "https://instagram.com/madville_solucoes",
       "instagramUser2": "@madville_solucoes",
-      "system_reload_timestamp": 1772143979735,
+      "system_reload_timestamp": 1772198813645,
       "cfApiToken": ""
     }
   },
