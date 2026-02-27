@@ -33,19 +33,19 @@
         },
         {
           "type": "video",
-          "src": "/madville/RO 65 PRIME  - Rometal e GMAD.mp4",
-          "title": "RO 65 PRIME Rometal e GMAD",
+          "src": "/madville/ro_65_prime_rometal.mp4",
+          "title": "RO 65 Prime Rometal GMAD",
           "subtitle": "",
           "duration": 8000,
-          "id": 1772198728863
+          "id": 1772200917082
         },
         {
           "type": "video",
-          "src": "/madville/RO 65 PRIME  disponível na GMAD   Rometal e GMAD.mp4",
-          "title": "RO 65 PRIME - Rometal GMAD",
+          "src": "/madville/ro_65_prime_disponivel.mp4",
+          "title": "RO65 PRIME GMAD Rometal",
           "subtitle": "",
           "duration": 8000,
-          "id": 1772198773636
+          "id": 1772200975704
         },
         {
           "id": "f-5",
@@ -106,7 +106,7 @@
       "instagramUser": "@gmadmadville",
       "instagramUrl2": "https://instagram.com/madville_solucoes",
       "instagramUser2": "@madville_solucoes",
-      "system_reload_timestamp": 1772200141048,
+      "system_reload_timestamp": 1772201001308,
       "cfApiToken": ""
     }
   },
