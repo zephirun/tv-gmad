@@ -11,11 +11,35 @@
         },
         {
           "type": "video",
-          "src": "/madville/Coleção Realce ARAUCO.mp4",
+          "src": "/madville/colecao_realce_arauco.mp4",
           "title": "Coleção Realce Arauco",
           "subtitle": "",
           "duration": 8000,
           "id": 1772126058805
+        },
+        {
+          "type": "video",
+          "src": "/madville/colecao_recanto_duratex.mp4",
+          "title": "Coleção Recanto Duratex",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058808
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_rometal.mp4",
+          "title": "RO 65 PRIME - Rometal",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058806
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_disponivel.mp4",
+          "title": "RO 65 PRIME Disponível",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058807
         },
         {
           "id": "f-3",
@@ -122,11 +146,35 @@
         },
         {
           "type": "video",
-          "src": "/madville/Coleção Realce ARAUCO.mp4",
+          "src": "/madville/colecao_realce_arauco.mp4",
           "title": "Coleção Realce Arauco",
           "subtitle": "",
           "duration": 8000,
           "id": 1772126058805
+        },
+        {
+          "type": "video",
+          "src": "/madville/colecao_recanto_duratex.mp4",
+          "title": "Coleção Recanto Duratex",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058808
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_rometal.mp4",
+          "title": "RO 65 PRIME - Rometal",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058806
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_disponivel.mp4",
+          "title": "RO 65 PRIME Disponível",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058807
         },
         {
           "id": "f-3",
