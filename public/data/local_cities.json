@@ -18,6 +18,14 @@
           "id": 1772126058805
         },
         {
+          "type": "video",
+          "src": "/madville/colecao_recanto_duratex.mp4",
+          "title": "Coleção Recanto Duratex",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772636901000
+        },
+        {
           "id": "f-3",
           "type": "video",
           "src": "/madville/videotela_madville.mp4",
@@ -106,7 +114,7 @@
       "instagramUser": "@gmadmadville",
       "instagramUrl2": "https://instagram.com/madville_solucoes",
       "instagramUser2": "@madville_solucoes",
-      "system_reload_timestamp": 1772201001308,
+      "system_reload_timestamp": 1772636923068,
       "cfApiToken": ""
     }
   },
@@ -122,11 +130,35 @@
         },
         {
           "type": "video",
-          "src": "/madville/Coleção Realce ARAUCO.mp4",
+          "src": "/madville/colecao_realce_arauco.mp4",
           "title": "Coleção Realce Arauco",
           "subtitle": "",
           "duration": 8000,
           "id": 1772126058805
+        },
+        {
+          "type": "video",
+          "src": "/madville/colecao_recanto_duratex.mp4",
+          "title": "Coleção Recanto Duratex",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058808
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_rometal.mp4",
+          "title": "RO 65 PRIME - Rometal",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058806
+        },
+        {
+          "type": "video",
+          "src": "/madville/ro_65_prime_disponivel.mp4",
+          "title": "RO 65 PRIME Disponível",
+          "subtitle": "",
+          "duration": 8000,
+          "id": 1772126058807
         },
         {
           "id": "f-3",
