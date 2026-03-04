@@ -18,6 +18,13 @@
           "id": 1772126058805
         },
         {
+          "id": "f-3",
+          "type": "video",
+          "src": "/madville/videotela_madville.mp4",
+          "title": "Madville",
+          "duration": null
+        },
+        {
           "type": "video",
           "src": "/madville/colecao_recanto_duratex.mp4",
           "title": "Coleção Recanto Duratex",
@@ -26,17 +33,17 @@
           "id": 1772637166860
         },
         {
-          "id": "f-3",
-          "type": "video",
-          "src": "/madville/videotela_madville.mp4",
-          "title": "Madville",
-          "duration": null
-        },
-        {
           "id": "f-4",
           "type": "video",
           "src": "/madville/gmad_boas_escolhas.mp4",
           "title": "GMAD Boas Escolhas",
+          "duration": null
+        },
+        {
+          "id": "f-6",
+          "type": "video",
+          "src": "/madville/perfis_marceneiros.mp4",
+          "title": "Perfis de Marceneiros",
           "duration": null
         },
         {
@@ -60,13 +67,6 @@
           "type": "video",
           "src": "/madville/puxadores_avulsos.mp4",
           "title": "Puxadores Avulsos",
-          "duration": null
-        },
-        {
-          "id": "f-6",
-          "type": "video",
-          "src": "/madville/perfis_marceneiros.mp4",
-          "title": "Perfis de Marceneiros",
           "duration": null
         },
         {
@@ -114,7 +114,7 @@
       "instagramUser": "@gmadmadville",
       "instagramUrl2": "https://instagram.com/madville_solucoes",
       "instagramUser2": "@madville_solucoes",
-      "system_reload_timestamp": 1772637182951,
+      "system_reload_timestamp": 1772659753405,
       "cfApiToken": ""
     }
   },
