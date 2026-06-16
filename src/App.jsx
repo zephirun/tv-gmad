@@ -17,6 +17,16 @@ import { LOCAL_CITIES } from './data/local_cities';
 
 const INFO_SLIDE_ITEM = { id: '__info_slide__', type: 'info', duration: 30000 };
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return url;
+  const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(ytRegex);
+  if (match && match[1]) {
+    return `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`;
+  }
+  return url;
+};
+
 export default function App() {
   // Identificação da Cidade via URL
   const pathSegment = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
@@ -189,8 +199,9 @@ export default function App() {
                          searchParams.get('edit') === 'true' ||
                          searchParams.get('admin') === 'true';
       if (!noRedirect) {
-        addLog(`[APP] Redirecionando para: ${settings.redirectUrl}`);
-        window.location.replace(settings.redirectUrl);
+        const destUrl = getYouTubeEmbedUrl(settings.redirectUrl);
+        addLog(`[APP] Redirecionando para: ${destUrl}`);
+        window.location.replace(destUrl);
       }
     }
   }, [settings?.redirectUrl]);
@@ -211,8 +222,9 @@ export default function App() {
                                searchParams.get('edit') === 'true' ||
                                searchParams.get('admin') === 'true';
             if (!noRedirect) {
-              addLog(`[TRIGGER] Link de direcionamento ativo. Redirecionando imediatamente para: ${sDoc.redirectUrl}`);
-              window.location.replace(sDoc.redirectUrl);
+              const destUrl = getYouTubeEmbedUrl(sDoc.redirectUrl);
+              addLog(`[TRIGGER] Link de direcionamento ativo. Redirecionando imediatamente para: ${destUrl}`);
+              window.location.replace(destUrl);
               return;
             }
           }
