@@ -34,9 +34,9 @@ export const backend = {
 
                 // Lista de fontes em ordem de prioridade
                 const sources = [
+                    { name: 'GITHUB_RAW', url: `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?cb=${Date.now()}` },
                     { name: 'SAME_ORIGIN', url: `/data/local_cities.json?cb=${Date.now()}` },
-                    { name: 'GITHUB_API', url: `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?cb=${Date.now()}`, needsDecode: true },
-                    { name: 'GITHUB_RAW', url: `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}?cb=${Date.now()}` }
+                    { name: 'GITHUB_API', url: `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?cb=${Date.now()}`, needsDecode: true }
                 ];
 
                 for (const src of sources) {

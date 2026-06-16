@@ -195,46 +195,62 @@ export default function App() {
     }
   }, [settings?.redirectUrl]);
 
-  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO: 20s)
+  // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO: 5s)
   useEffect(() => {
     const checkUpdates = async () => {
       try {
         const res = await backend.db.getDoc(cityKey, 'settings');
 
-        if (res?.data && res.data.system_reload_timestamp) {
+        if (res?.data) {
           const sDoc = res.data;
-          const newTimestamp = Number(sDoc.system_reload_timestamp);
-          setLastSource(res.source);
-          setHasToken(res.hasToken);
 
-          if (lastKnownTimestampRef.current === null) {
-            lastKnownTimestampRef.current = newTimestamp;
-            addLog(`[CHECK] Monitor ativo (${newTimestamp}) em ${window.location.hostname} via ${res.source}`);
-            return;
+          // Se houver um link de redirecionamento ativo e não estivermos em modo bypass, redireciona imediatamente
+          if (sDoc.redirectUrl) {
+            const searchParams = new URLSearchParams(window.location.search);
+            const noRedirect = searchParams.get('noredirect') === 'true' ||
+                               searchParams.get('edit') === 'true' ||
+                               searchParams.get('admin') === 'true';
+            if (!noRedirect) {
+              addLog(`[TRIGGER] Link de direcionamento ativo. Redirecionando imediatamente para: ${sDoc.redirectUrl}`);
+              window.location.replace(sDoc.redirectUrl);
+              return;
+            }
           }
 
-          if (newTimestamp !== lastKnownTimestampRef.current) {
-            addLog(`[TRIGGER] Mudança detectada: ${newTimestamp}`);
-            lastKnownTimestampRef.current = newTimestamp;
+          if (sDoc.system_reload_timestamp) {
+            const newTimestamp = Number(sDoc.system_reload_timestamp);
+            setLastSource(res.source);
+            setHasToken(res.hasToken);
 
-            setTimeout(() => {
-              // Força o Cloudflare a servir o index.html novo
-              const origin = window.location.protocol + "//" + window.location.host;
-              const searchParams = new URLSearchParams(window.location.search);
-              searchParams.set('v', newTimestamp);
-              searchParams.set('t', Date.now());
-              const newUrl = origin + window.location.pathname + '?' + searchParams.toString();
+            if (lastKnownTimestampRef.current === null) {
+              lastKnownTimestampRef.current = newTimestamp;
+              addLog(`[CHECK] Monitor ativo (${newTimestamp}) em ${window.location.hostname} via ${res.source}`);
+              return;
+            }
 
-              addLog(`[RELOAD] Redirecionando: ${newUrl}`);
-              window.location.replace(newUrl);
+            if (newTimestamp !== lastKnownTimestampRef.current) {
+              addLog(`[TRIGGER] Mudança detectada: ${newTimestamp}`);
+              lastKnownTimestampRef.current = newTimestamp;
 
-              // Fallbacks agressivos
-              setTimeout(() => { window.location.href = newUrl; }, 1000);
-              setTimeout(() => { window.location.reload(true); }, 3000);
-            }, 1000);
-          } else {
-            // Add periodic log only every 3 checks to avoid spamming
-            if (Math.random() < 0.3) addLog(`[CHECK] Sem mudanças (${newTimestamp}) via ${res.source}`);
+              setTimeout(() => {
+                // Força o Cloudflare a servir o index.html novo
+                const origin = window.location.protocol + "//" + window.location.host;
+                const searchParams = new URLSearchParams(window.location.search);
+                searchParams.set('v', newTimestamp);
+                searchParams.set('t', Date.now());
+                const newUrl = origin + window.location.pathname + '?' + searchParams.toString();
+
+                addLog(`[RELOAD] Redirecionando: ${newUrl}`);
+                window.location.replace(newUrl);
+
+                // Fallbacks agressivos
+                setTimeout(() => { window.location.href = newUrl; }, 1000);
+                setTimeout(() => { window.location.reload(true); }, 3000);
+              }, 1000);
+            } else {
+              // Add periodic log only every 3 checks to avoid spamming
+              if (Math.random() < 0.3) addLog(`[CHECK] Sem mudanças (${newTimestamp}) via ${res.source}`);
+            }
           }
         }
       } catch (err) {
@@ -242,8 +258,8 @@ export default function App() {
       }
     };
 
-    const interval = setInterval(checkUpdates, 20000); // 20 segundos
-    setTimeout(checkUpdates, 2000);
+    const interval = setInterval(checkUpdates, 5000); // 5 segundos
+    setTimeout(checkUpdates, 1000);
     return () => clearInterval(interval);
   }, [cityKey]);
 
