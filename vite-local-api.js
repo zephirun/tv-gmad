@@ -24,6 +24,48 @@ export default function localApiPlugin() {
                     return;
                 }
 
+                // Endpoint para salvar múltiplos documentos (batch)
+                if (req.url === '/api/save-city-data-batch' && req.method === 'POST') {
+                    let body = '';
+                    req.on('data', chunk => { body += chunk; });
+                    req.on('end', () => {
+                        try {
+                            const { collectionId, docsMap } = JSON.parse(body);
+                            const jsonPath = path.resolve(process.cwd(), 'src/data/local_cities.json');
+
+                            let currentData = {};
+                            if (fs.existsSync(jsonPath)) {
+                                currentData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+                            }
+
+                            if (!currentData[collectionId]) currentData[collectionId] = {};
+
+                            // Aplica o batch no arquivo JSON
+                            Object.entries(docsMap).forEach(([docId, data]) => {
+                                if (typeof data === 'object' && !Array.isArray(data)) {
+                                    currentData[collectionId][docId] = {
+                                        ...(currentData[collectionId][docId] || {}),
+                                        ...data
+                                    };
+                                } else {
+                                    currentData[collectionId][docId] = data;
+                                }
+                            });
+
+                            fs.writeFileSync(jsonPath, JSON.stringify(currentData, null, 2));
+
+                            res.statusCode = 200;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.end(JSON.stringify({ success: true }));
+                        } catch (err) {
+                            console.error('Error saving batch data:', err);
+                            res.statusCode = 500;
+                            res.end(JSON.stringify({ error: err.message }));
+                        }
+                    });
+                    return;
+                }
+
                 // Endpoint para salvar dados JSON (notícias, configurações, etc)
                 if (req.url === '/api/save-city-data' && req.method === 'POST') {
                     let body = '';

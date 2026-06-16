@@ -181,6 +181,20 @@ export default function App() {
     return () => clearInterval(interval);
   }, [settings?.weatherCity]);
 
+  // Redirecionamento automático se configurado em settings.redirectUrl
+  useEffect(() => {
+    if (settings?.redirectUrl) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const noRedirect = searchParams.get('noredirect') === 'true' ||
+                         searchParams.get('edit') === 'true' ||
+                         searchParams.get('admin') === 'true';
+      if (!noRedirect) {
+        addLog(`[APP] Redirecionando para: ${settings.redirectUrl}`);
+        window.location.replace(settings.redirectUrl);
+      }
+    }
+  }, [settings?.redirectUrl]);
+
   // MONITORAMENTO DE ATUALIZAÇÕES REMOTAS (MAIS AGRESSIVO: 20s)
   useEffect(() => {
     const checkUpdates = async () => {

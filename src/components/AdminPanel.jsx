@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
     Layout, X, Save, Loader2, AlertCircle,
     CheckCircle, FileImage, FileVideo, PlayCircle, Newspaper, Trash2,
-    Plus, Volume2, ArrowUp, ArrowDown, Image, Settings, Lock, MapPin, Info
+    Plus, Volume2, ArrowUp, ArrowDown, Image, Settings, Lock, MapPin, Info,
+    ExternalLink
 } from 'lucide-react';
-import { backend, PROVIDER, supabase } from '../services/backend';
+import { backend } from '../services/backend';
 import { LOGO_URL } from '../constants';
 
 export default function AdminPanel({ collectionId = 'tv_config', playlist, setPlaylist, news, setNews, onClose, user, settings }) {
@@ -943,6 +944,31 @@ export default function AdminPanel({ collectionId = 'tv_config', playlist, setPl
                                             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Nome da Rede Wi-Fi</label>
                                             <input type="text" style={s.input} value={editSettings.wifiSsid || ''} onChange={e => setEditSettings({ ...editSettings, wifiSsid: e.target.value })} placeholder="Ex: GMAD Visitantes" />
                                             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>Exibido no card informativo da Sidebar.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={s.card}>
+                                    <div style={s.sectionTitle}>
+                                        <div style={{ padding: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '10px' }}>
+                                            <ExternalLink size={20} />
+                                        </div>
+                                        <span>Redirecionamento de URL</span>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>URL de Redirecionamento (Opcional)</label>
+                                            <input 
+                                                type="text" 
+                                                style={s.input} 
+                                                value={editSettings.redirectUrl || ''} 
+                                                onChange={e => setEditSettings({ ...editSettings, redirectUrl: e.target.value })} 
+                                                placeholder="Ex: https://gmad.com.br" 
+                                            />
+                                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px', lineHeight: '1.4' }}>
+                                                Se preenchido, qualquer pessoa que acessar a URL desta TV será redirecionada automaticamente para esta URL.<br />
+                                                <b>Importante:</b> Para editar as configurações no futuro após ativar o redirecionamento, acesse a página adicionando <code>?noredirect=true</code> no final do link (ex: <code>/madville?noredirect=true</code>).
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
