@@ -208,6 +208,15 @@ export default function Player({ currentItem, playlist, currentIndex, next, weat
                 />
             )}
 
+            {currentItem.type === 'redirect' && (
+                <iframe
+                    key={currentItem.src}
+                    src={currentItem.src}
+                    allow="autoplay"
+                    style={{ width: '100%', height: '100%', border: 'none', background: 'white', transform: 'none', pointerEvents: 'auto' }}
+                />
+            )}
+
             {currentItem.type === 'youtube' && (
                 <div key={`yt-wrap-${currentItem.src}`} style={{ width: '100%', height: '100%' }}>
                     <div
