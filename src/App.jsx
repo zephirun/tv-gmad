@@ -220,8 +220,10 @@ export default function App() {
             setTimeout(() => {
               // Força o Cloudflare a servir o index.html novo
               const origin = window.location.protocol + "//" + window.location.host;
-              const newUrl = origin + window.location.pathname +
-                '?v=' + newTimestamp + '&t=' + Date.now();
+              const searchParams = new URLSearchParams(window.location.search);
+              searchParams.set('v', newTimestamp);
+              searchParams.set('t', Date.now());
+              const newUrl = origin + window.location.pathname + '?' + searchParams.toString();
 
               addLog(`[RELOAD] Redirecionando: ${newUrl}`);
               window.location.replace(newUrl);
